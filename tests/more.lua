@@ -37,6 +37,10 @@ for index=4,5 do
  local child=host.child
  if index==5 then
   local rows=child.state.rows;host:tick(8.1);ok(child.state.rows==rows+1,'collapse timer')
+  child.y=11;press('down');ok(child.y==12 and child.state.rows==rows+1,'Down reaches bottom without raising')
+  child.time=4;press('down');ok(child.state.rows==rows+2 and child.time==0 and child.y==11,'Down at bottom raises immediately and follows blocks')
+  host:tick(.1);ok(child.state.rows==rows+2,'manual rise resets row timer')
+  child.y=12;child.state.board[1][1]=1;press('down');ok(child.state.over,'manual rise respects top out')
 
  end
  press('start');local clock=child.clock;host:tick(20);ok(child.clock==clock,'pause freezes extra games')

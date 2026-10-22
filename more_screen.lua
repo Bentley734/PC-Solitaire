@@ -49,7 +49,9 @@ function Screen:handle(input)
   if input:wasPressed('left')then self.x=(self.x-2)%10+1
   elseif input:wasPressed('right')then self.x=self.x%10+1
   elseif input:wasPressed('up')then self.y=math.max(1,self.y-1)
-  elseif input:wasPressed('down')then self.y=math.min(12,self.y+1)
+  elseif input:wasPressed('down')then
+   if self.y==12 then R.rise(s);self.time=0;self.fx=nil;self.y=11
+   else self.y=self.y+1 end
   elseif input:wasPressed('a')and not self.fx then
    local group=R.removeGroup(s,self.x,self.y)
    if group then self.fx={time=0,cells=group};self.status='CLEARED '..#group else self.status='MATCH 3 OR MORE'end

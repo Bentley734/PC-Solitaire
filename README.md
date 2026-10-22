@@ -1,4 +1,4 @@
-# PC Games 1.3.1
+# PC Games 1.3.2
 
 Solitaire, Snake, Tetris, Blackjack and Collapse in a **GAMES** submenu on every in-game PC. Supports Red, Blue, Yellow, Gold, Silver, Crystal, FireRed, LeafGreen, Ruby, Sapphire and Emerald with Mod API v2 (Gen1Recomp >=0.3.54 <0.4.0).
 
@@ -40,7 +40,7 @@ A 52-card deck is shuffled for each hand. Choose Hit, Stand or Double with the D
 
 ## Collapse
 
-An original rising-block puzzle inspired by Collapse: move the cursor with the D-pad, press A on an orthogonally connected group of at least three identical blocks. Blocks fall down within their own columns after a clear. Blocks use solid colors without number labels. A row rises every eight seconds initially, speeding up as the score grows; reaching the top ends the game. Groups score `n*(n-1)*5`. B/Start/Select pauses; A retries after game over. No copyrighted Collapse assets are used.
+An original rising-block puzzle inspired by Collapse: move the cursor with the D-pad, press A on an orthogonally connected group of at least three identical blocks. Blocks fall down within their own columns after a clear. Blocks use solid colors without number labels. Press Down while already on the bottom row to bring up the next row immediately; the cursor follows the existing blocks upward and the automatic-row timer resets. A row rises every eight seconds initially, speeding up as the score grows; reaching the top ends the game. Groups score `n*(n-1)*5`. B/Start/Select pauses; A retries after game over. No copyrighted Collapse assets are used.
 
 ## Display and engine adapters
 
