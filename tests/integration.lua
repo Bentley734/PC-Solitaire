@@ -66,9 +66,34 @@ for _,id in ipairs({'red','blue','yellow','gold','silver','crystal','firered','l
   PC.show({session=session,startMode='select'});local rows=PC._rootEntries();ok(rows[#rows].id=='pc_solitaire','Gen3 row');ok(#PC._rootEntries()==#rows,'no duplicate')
   PC.cursor=#rows;g.input.pressed={a=true};PC.handleInput(g.input);local layer=Stack.top();ok(layer.id=='pc_solitaire','Gen3 open');layer.mod.draw();layer.mod.update(.1)
   tour(g,layer.mod.handleInput,layer.mod.draw);ok(Stack.top().id=='pc_menu' and PC.open and PC.cursor==#rows,'Gen3 return')
-  PC.close();PC.show({session=session,startMode='player_pc',bedroom=true});ok(Stack.top().id=='pc_solitaire_bedroom','Gen3 bedroom choices');Stack.top().mod.draw()
-  g.input.pressed={down=true};Stack.top().mod.handleInput(g.input);g.input.pressed={a=true};Stack.top().mod.handleInput(g.input);ok(Stack.top().id=='pc_solitaire','Gen3 bedroom open')
-  layer=Stack.top();tour(g,layer.mod.handleInput,layer.mod.draw);ok(Stack.top().id=='pc_solitaire_bedroom' and PC.open,'Gen3 bedroom return')
+  PC.close();PC.show({session=session,startMode='player_pc',bedroom=true})
+  ok(Stack.top().id=='pc_menu' and Stack.depth()==1,'Gen3 bedroom native menu only')
+  ok(PC.mode=='player_pc','Gen3 original PC mode')
+  local order
+  if require('src.core.game3.profile').family(session)=='rse' then order=require('src.ui.game3.rse.player_pc').topOrder(PC)
+  else order={};for i,e in ipairs(PC.TOP_ACTIONS)do order[i]=e.id end end
+  local games
+  for i,id in ipairs(order)do if id=='pc_games'then games=i end end
+  ok(games and games==#order-1,'Games before native Turn Off')
+  if require('src.core.game3.profile').family(session)=='rse' then
+   local Rse=require('src.ui.game3.rse.player_pc')
+   local drawMenu,drawStatus=Rse.drawMenu,Rse.drawStatus
+   local labels,statusCalls
+   Rse.drawMenu=function(rows)labels=rows end
+   Rse.drawStatus=function()statusCalls=(statusCalls or 0)+1 end
+   PC.draw()
+   ok(labels and labels[games]=='GAMES' and #labels==#order,'native RSE menu includes Games')
+   ok(statusCalls==1,'native status drawn once')
+   Rse.drawMenu,Rse.drawStatus=drawMenu,drawStatus
+  end
+  PC.cursor=games;g.input.pressed={a=true};PC.handleInput(g.input);g.input.pressed={}
+  ok(Stack.top().id=='pc_solitaire','Gen3 bedroom Games open')
+  layer=Stack.top();tour(g,layer.mod.handleInput,layer.mod.draw)
+  ok(Stack.top().id=='pc_menu' and PC.open and PC.mode=='player_pc' and PC.cursor==games,'Gen3 native bedroom return')
+  -- Navigation uses the real PC handler, including the inserted row.
+  g.input.pressed={down=true};PC.handleInput(g.input);g.input.pressed={}
+  ok(PC.cursor==games+1,'native navigation to Turn Off')
+
  end
  print('PC adapters passed: '..id)
 end

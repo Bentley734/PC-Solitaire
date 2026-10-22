@@ -6,7 +6,7 @@ function Games.new(game,w,h,close)
  return setmetatable({game=game,w=w,h=h,close=close,index=1,isOpaque=true,isMenu=true,clock=0},Games)
 end
 function Games:launch(index)
- self.pause=nil;self.elapsed=0;self.clock=0;self.repeatKey=nil;self.repeatTime=0
+ self.child=nil;self.pause=nil;self.snakeFX=nil;self.clearFX=nil;self.elapsed=0;self.clock=0;self.repeatKey=nil;self.repeatTime=0
  if index==1 then
   self.child=Solitaire.new(self.game,self.w,self.h,function()self.child=nil;self.mode=nil end)
   self.child.exitLabel='QUIT TO GAMES';self.mode='solitaire'
@@ -15,8 +15,15 @@ function Games:launch(index)
 end
 function Games:tick(dt)
  self.clock=self.clock+dt
- if self.child then self.child.clock=self.child.clock+dt;return end
- if not self.mode or self.pause or self.state.over then return end
+ if self.child then self.child:tick(dt);return end
+ if not self.mode or self.pause then return end
+ if self.snakeFX then self.snakeFX.time=self.snakeFX.time+dt;if self.snakeFX.time>=.6 then self.snakeFX=nil end end
+ if self.clearFX then
+  self.clearFX.time=self.clearFX.time+dt
+  if self.clearFX.time>=.48 then self.clearFX=nil;self.elapsed=0 end
+  return
+ end
+ if self.state.over then return end
  if self.mode=='tetris' then
   local input=self.game.input
   if input.isDown then
@@ -37,8 +44,17 @@ function Games:tick(dt)
  local steps=0
  while self.elapsed>=speed and steps<5 and not self.state.over do
   self.elapsed=self.elapsed-speed;steps=steps+1
-  if self.mode=='snake' then Rules.snakeStep(self.state) else Rules.drop(self.state,false) end
+  if self.mode=='snake' then
+   local score=self.state.score;local food=self.state.food
+   Rules.snakeStep(self.state)
+   if self.state.score>score then self.snakeFX={x=food.x,y=food.y,time=0}end
+  else self:drop(false);if self.clearFX then break end end
  end
+end
+function Games:drop(hard)
+ local serial=self.state.clearSerial
+ Rules.drop(self.state,hard)
+ if self.state.clearSerial~=serial then self.clearFX={event=self.state.clearEvent,time=0};self.elapsed=0;self.repeatKey=nil end
 end
 function Games:handle(input)
  if self.closed then return end
@@ -60,6 +76,7 @@ function Games:handle(input)
   return
  end
  if input:wasPressed('b')or input:wasPressed('start')or input:wasPressed('select')then self.pause=true;self.menu=1;return end
+ if self.clearFX then return end
  if self.state.over then if input:wasPressed('a')then self:launch(self.mode=='snake' and 2 or 3)end;return end
  if self.mode=='snake' then
   if input:wasPressed('up')then Rules.turn(self.state,0,-1)
@@ -70,7 +87,7 @@ function Games:handle(input)
   if input:wasPressed('left')then Rules.shift(self.state,-1,0)
   elseif input:wasPressed('right')then Rules.shift(self.state,1,0)
   elseif input:wasPressed('down')then if Rules.shift(self.state,0,1)then self.state.score=self.state.score+1;self.elapsed=0 end
-  elseif input:wasPressed('up')then Rules.drop(self.state,true);self.elapsed=0
+  elseif input:wasPressed('up')then self:drop(true);self.elapsed=0
   elseif input:wasPressed('a')then Rules.shift(self.state,0,0,1)end
  end
 end
@@ -92,18 +109,57 @@ function Games:draw()
   local cell=math.floor(math.min((self.w-10)/20,(self.h-34)/16));local ox=math.floor((self.w-cell*20)/2);local oy=20
   g.setColor(.18,.28,.35,1);g.rectangle('line',ox-1,oy-1,20*cell+2,16*cell+2)
   if s.food then g.setColor(1,.3,.3,1);g.rectangle('fill',ox+(s.food.x-1)*cell+1,oy+(s.food.y-1)*cell+1,cell-2,cell-2)end
-  for i,p in ipairs(s.body)do g.setColor(i==1 and 1 or .3,1,.45,1);g.rectangle('fill',ox+(p.x-1)*cell,oy+(p.y-1)*cell,cell-1,cell-1)end
+  for i,p in ipairs(s.body)do
+   local ripple=self.snakeFX and math.max(0,1-math.abs(self.snakeFX.time*20-(i-1))*.8)or 0
+   g.setColor(i==1 and 1 or .3+ripple*.7,1,.45+ripple*.45,1)
+   local grow=ripple>.35 and 1 or 0
+   g.rectangle('fill',ox+(p.x-1)*cell-grow,oy+(p.y-1)*cell-grow,cell-1+grow*2,cell-1+grow*2)
+  end
+  if self.snakeFX then
+   local e=self.snakeFX;local t=e.time/.6;local px=ox+(e.x-.5)*cell;local py=oy+(e.y-.5)*cell
+   g.setColor(1,.85,.2,1-t);local radius=cell*(.5+t*1.8)
+   g.rectangle('line',math.floor(px-radius),math.floor(py-radius),math.floor(radius*2),math.floor(radius*2))
+   for i=0,7 do local angle=i*math.pi/4;local r=cell*(1+t*3)
+    g.rectangle('fill',math.floor(px+math.cos(angle)*r),math.floor(py+math.sin(angle)*r),2,2)
+   end
+   g.setColor(1,1,.6,1-t);text('10',math.floor(px-3),math.floor(py-cell-6-t*8))
+  end
   g.setColor(1,1,1,1);text('SCORE '..s.score,65,5);text('D PAD MOVE  B PAUSE',4,self.h-8)
  else
   local cell=math.floor((self.h-24)/20);local ox=math.floor((self.w-cell*10-56)/2);local oy=15
   local function block(x,y,id,ghost)
    if y<1 then return end
    g.setColor(colors[id][1],colors[id][2],colors[id][3],1)
-   g.rectangle(ghost and 'line'or 'fill',ox+(x-1)*cell+1,oy+(y-1)*cell+1,cell-2,cell-2)
+   g.rectangle(ghost and 'line'or 'fill',math.floor(ox+(x-1)*cell+1),math.floor(oy+(y-1)*cell+1),cell-2,cell-2)
   end
   g.setColor(.18,.28,.35,1);g.rectangle('line',ox-1,oy-1,cell*10+2,cell*20+2)
-  for y=1,20 do for x=1,10 do if s.board[y][x]then block(x,y,s.board[y][x])end end end
-  if not s.over then
+  local clear=self.clearFX
+  if clear then
+   local e=clear.event;local marked={};for _,y in ipairs(e.rows)do marked[y]=true end
+   if clear.time<.28 then
+    for y=1,20 do for x=1,10 do
+     local id=e.board[y][x]
+     if id then
+      if not marked[y]then block(x,y,id)
+      else
+       local t=clear.time/.28;g.setColor(1,1,.65,1)
+       local width=math.max(1,math.floor((cell-1)*(1-t)))
+       g.rectangle('fill',ox+(x-1)*cell+math.floor((cell-width)/2),oy+(y-1)*cell+1,width,cell-2)
+      end
+     end
+    end end
+   else
+    local t=math.min(1,(clear.time-.28)/.2);t=1-(1-t)*(1-t)
+    for y=1,20 do if not marked[y]then
+     local fall=0;for _,row in ipairs(e.rows)do if row>y then fall=fall+1 end end
+     for x=1,10 do if e.board[y][x]then block(x,y+fall*t,e.board[y][x])end end
+    end end
+   end
+   g.setColor(1,1,.7,1);text(#e.rows..' LINES',ox+5,57);text(e.points..' POINTS',ox+5,66)
+  else
+   for y=1,20 do for x=1,10 do if s.board[y][x]then block(x,y,s.board[y][x])end end end
+  end
+  if not s.over and not clear then
    local p=s.piece;local ghost={id=p.id,x=p.x,y=p.y,rot=p.rot}
    repeat ghost.y=ghost.y+1 until not Rules.fits(s,ghost);ghost.y=ghost.y-1
    for _,c in ipairs(Rules.cells(ghost))do block(c.x,c.y,p.id,true)end
@@ -113,7 +169,7 @@ function Games:draw()
   for _,c in ipairs(Rules.cells({id=s.next,x=1,y=1,rot=0}))do g.setColor(unpack(colors[s.next]));g.rectangle('fill',tx+(c.x-1)*5,82+(c.y-1)*5,4,4)end
   g.setColor(1,1,1,1);text('A TURN',tx,104);text('UP DROP',tx,114);text('B PAUSE',tx,124)
  end
- if s.over then
+ if s.over and not self.clearFX then
   g.setColor(.02,.04,.08,.95);g.rectangle('fill',4,math.floor(self.h/2)-13,self.w-8,30)
   g.setColor(1,.85,.3,1);text(s.won and 'YOU WIN'or 'GAME OVER',math.floor(self.w/2)-18,math.floor(self.h/2)-7);text('A RETRY  B MENU',math.floor(self.w/2)-28,math.floor(self.h/2)+4)
  end

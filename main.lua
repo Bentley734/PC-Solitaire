@@ -63,35 +63,30 @@ mod.events:on('game.ready',function(ev)
         local r=PC._rootEntries()[PC.cursor]
         if r and r.id=='pc_solitaire' and input:wasPressed('a') then open(liveGame,true);return end
       end
+      if PC.open and PC.mode=='player_pc' then
+        local Profile=require('src.core.game3.profile')
+        local id
+        if Profile.family(PC._session)=='rse' then id=require('src.ui.game3.rse.player_pc').topOrder(PC)[PC.cursor]
+        else local entry=PC.TOP_ACTIONS[PC.cursor];id=entry and entry.id end
+        if id=='pc_games' and input:wasPressed('a') then open(liveGame,true);return end
+      end
       return original(input)
     end end)
-    -- Bedroom PCs skip the hub and open directly in a family-specific player menu.
-    patch(PC,'show',function(original) return function(opts)
-      local result=original(opts)
-      if opts and opts.startMode=='player_pc' then
-        local Stack=require('src.ui.game3.stack')
-        local priorMode,priorCursor=PC.mode,PC.cursor
-        local choice=1
-        Stack.push('pc_solitaire_bedroom',{
-          isMenu=true,
-          handleInput=function(input)
-            if input:wasPressed('up') or input:wasPressed('down') then choice=3-choice
-            elseif input:wasPressed('b') then Stack.pop('pc_solitaire_bedroom')
-            elseif input:wasPressed('a') then
-              if choice==1 then Stack.pop('pc_solitaire_bedroom');PC.mode=priorMode;PC.cursor=priorCursor
-              else open(liveGame,true) end
-            end
-          end,
-          draw=function()
-            local Window=require('src.ui.game3.window')
-            local box=Window.template(1,1,23,6)
-            Window.fill(box);Window.stdFrame(box)
-            Window.printPx('PLAYER PC',24,16);Window.printPx('GAMES',24,32)
-            Window.cursorPx(12,choice==1 and 16 or 32)
-          end,
-        },{hideBelow=false})
-      end
-      return result
+    -- Add Games directly to the native player-PC rows, including bedroom PCs.
+    insert(PC.TOP_ACTIONS,{id='pc_games',label='GAMES'})
+    local Rse=require('src.ui.game3.rse.player_pc')
+    patch(Rse,'topOrder',function(original) return function(pc)
+      local rows={};for i,id in ipairs(original(pc)) do rows[i]=id end
+      for _,id in ipairs(rows)do if id=='pc_games' then return rows end end
+      table.insert(rows,#rows,'pc_games');return rows
+    end end)
+    patch(Rse,'draw',function(original) return function(pc)
+      if pc.mode~='player_pc' then return original(pc) end
+      local keys={item_storage='gText_ItemStorage',mailbox='gText_Mailbox',decoration='gText_Decoration',turn_off='gText_TurnOff'}
+      local RomText=require('src.core.game3.rom_text')
+      local labels={}
+      for i,id in ipairs(Rse.topOrder(pc))do labels[i]=id=='pc_games' and 'GAMES' or RomText.plain(keys[id]) end
+      Rse.drawMenu(labels,pc.cursor,#labels*2);Rse.drawStatus(pc)
     end end)
   elseif generation==2 then
     local Hub=require('src.ui.gen2.CenterPcMenu')

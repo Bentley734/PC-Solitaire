@@ -34,7 +34,41 @@ function Screen:sync()
     self.index=math.max(1,self.index)
   end
 end
+-- Snapshot positions by card identity; rules still commit immediately.
+function Screen:positions()
+  local out={};local step=math.floor((self.w-4)/7)
+  local base=self.w==160 and 40 or 52;local ch=self.w==160 and 24 or 36
+  local function add(p,col,y,dy,topOnly)
+    for i,c in ipairs(p)do out[c]={x=3+(col-1)*step,y=y+(i-1)*(dy or 0),up=c.up,visible=not topOnly or i==#p,order=i}end
+  end
+  add(self.state.stock,1,11,0,true);add(self.state.waste,2,11,0,true)
+  for i,p in ipairs(self.state.foundations)do add(p,i+3,11,0,true)end
+  for col,p in ipairs(self.state.tableau)do
+    local dy=math.min(8,math.max(1,math.floor((self.h-19-base-ch)/math.max(1,#p-1))))
+    add(p,col,base,dy,false)
+  end
+  return out
+end
 function Screen:act()
+  local before=self:positions()
+  -- Continue a rapid follow-up move from the card's current visible position.
+  for c,e in pairs(self.effects or {})do
+    if before[c]then
+      local t=math.min(1,(self.clock-e.start)/e.duration);t=t*t*(3-2*t)
+      before[c].x=e.x+(e.tx-e.x)*t;before[c].y=e.y+(e.ty-e.y)*t
+    end
+  end
+  self:applyAction()
+  local after=self:positions();local effects={}
+  for c,b in pairs(before)do
+    local a=after[c]
+    if a and (a.visible or b.visible) and (a.x~=b.x or a.y~=b.y or a.up~=b.up)then
+      effects[c]={card=c,x=b.x,y=b.y,tx=a.x,ty=a.y,fromUp=b.up,toUp=a.up,start=self.clock,duration=.24,flip=a.up~=b.up,order=a.order}
+    end
+  end
+  self.effects=effects
+end
+function Screen:applyAction()
   if self.row==0 and self.col==1 then
     if self.held then self.status='B CANCEL FIRST';return end
     Logic.drawStock(self.state);self.last=nil;return
@@ -63,7 +97,7 @@ function Screen:handle(input)
     elseif input:wasPressed('down') then self.menu=self.menu%4+1
     elseif input:wasPressed('a') then
       if self.menu==1 then self.pause=nil
-      elseif self.menu==2 then self.state=Logic.new(self.state.draw);self.held=nil;self.last=nil;self.row=0;self.col=1;self.pause=nil
+      elseif self.menu==2 then self.state=Logic.new(self.state.draw);self.effects={};self.held=nil;self.last=nil;self.row=0;self.col=1;self.pause=nil
       elseif self.menu==3 then self.state.draw=self.state.draw==1 and 3 or 1
       else self.closed=true;self.close() end
     end
@@ -88,10 +122,16 @@ function Screen:handle(input)
   if moved then self.last=nil;self:sync() end
 end
 function Screen:update(dt)
-  self.clock=self.clock+dt
+  self:tick(dt)
   self:handle(self.game.input)
 end
-function Screen:card(c,x,y,w,h)
+function Screen:tick(dt)
+  if self.pause then return end
+  self.clock=self.clock+dt
+  for c,e in pairs(self.effects or {})do if self.clock-e.start>=e.duration then self.effects[c]=nil end end
+end
+function Screen:card(c,x,y,w,h,animated)
+  if c and not animated and self.effects and self.effects[c]then return end
   local g=love.graphics
   local img=c and self.images[c.up and (c.suit..'_'..c.rank) or 'back']
   g.setColor(1,1,1,1)
@@ -128,6 +168,19 @@ function Screen:draw()
     if self.held and self.held.kind=='tableau' and self.held.pile==col then
       g.setColor(0.4,0.8,1,1);g.rectangle('line',x(col)-1,base+(self.held.index-1)*dy-1,cw+2,ch+2)
     end
+  end
+  -- Moving cards are drawn above their destination piles; flips narrow to an edge.
+  local flying={};for _,e in pairs(self.effects or {})do flying[#flying+1]=e end
+  table.sort(flying,function(a,b)if a.ty==b.ty then if a.tx==b.tx then return a.order<b.order end;return a.tx<b.tx end;return a.ty<b.ty end)
+  for _,e in ipairs(flying)do
+    local t=math.min(1,(self.clock-e.start)/e.duration);local ease=t*t*(3-2*t)
+    local px=math.floor(e.x+(e.tx-e.x)*ease+.5);local py=math.floor(e.y+(e.ty-e.y)*ease+.5)
+    local width=e.flip and math.max(1,math.floor(cw*math.abs(1-2*t)))or cw
+    local face={suit=e.card.suit,rank=e.card.rank}
+    -- Preserve false at the first half of a face-down -> face-up flip.
+    if t<.5 then face.up=e.fromUp else face.up=e.toUp end
+    g.push();g.translate(px+math.floor((cw-width)/2),py);g.scale(width/cw,1)
+    self:card(face,0,0,cw,ch,true);g.pop()
   end
   g.setColor(1,0.88,0.1,1);g.rectangle('line',x(self.col)-1,focusY-1,cw+2,ch+2)
   local ref=self:ref();local p=Logic.pile(self.state,ref);local c=p and p[ref.index or #p]

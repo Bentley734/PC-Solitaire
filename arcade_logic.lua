@@ -74,6 +74,16 @@ function M.lock(s)
   if c.y<1 then s.over=true;return end
  end
  for _,c in ipairs(M.cells(s.piece))do s.board[c.y][c.x]=s.piece.id end
+ local rows={}
+ for y=1,20 do
+  local full=true;for x=1,10 do if not s.board[y][x]then full=false;break end end
+  if full then rows[#rows+1]=y end
+ end
+ if #rows>0 then
+  local board={};for y=1,20 do board[y]={};for x=1,10 do board[y][x]=s.board[y][x]end end
+  s.clearSerial=(s.clearSerial or 0)+1
+  s.clearEvent={serial=s.clearSerial,rows=rows,board=board,points=({0,100,300,500,800})[#rows+1]*s.level}
+ end
  local cleared=0;local y=20
  while y>=1 do
   local full=true;for x=1,10 do if not s.board[y][x]then full=false;break end end

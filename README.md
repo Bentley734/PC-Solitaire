@@ -1,8 +1,8 @@
-# PC Games 1.1.0
+# PC Games 1.2.0
 
 Solitaire, Snake and Tetris in a **GAMES** submenu on every in-game PC. Supports Red, Blue, Yellow, Gold, Silver, Crystal, FireRed, LeafGreen, Ruby, Sapphire and Emerald with Mod API v2 (Gen1Recomp >=0.3.54 <0.4.0).
 
-Install: extract `pc_solitaire` into `mods`, replacing the previous folder, enable **PC Games**, and restart the game. The folder, internal mod ID and GitHub repository remain unchanged so this upgrades PC Solitaire. Choose **GAMES** at any PC, including bedroom PCs. In Gen 3 bedrooms, choose GAMES alongside PLAYER PC.
+Install: extract `pc_solitaire` into `mods`, replacing the previous folder, enable **PC Games**, and restart the game. The folder, internal mod ID and GitHub repository remain unchanged so this upgrades PC Solitaire. Choose **GAMES** at any PC, including bedroom PCs. In Gen 3 player/bedroom PCs, GAMES is part of the native options list immediately before Turn Off; there is no extra Player PC / Games chooser.
 
 ## Menu and return
 
@@ -15,11 +15,11 @@ Up/down chooses Solitaire, Snake, Tetris or Back to PC. A opens the highlighted 
 - B: cancel a selection, or prompt to quit to Games. A confirms, B resumes.
 - Start/Select: Resume, New Deal, Draw 1/3 Toggle, Quit to Games.
 
-Alternating-color descending tableau, Kings on empty columns, same-suit ascending foundations from Ace to King, unlimited stock recycling. Changing draw mode keeps the current deal. Exposed cards flip automatically. Foundation cards may return to the tableau. Complete all foundations to win. The yellow selector surrounds the whole card.
+Alternating-color descending tableau, Kings on empty columns, same-suit ascending foundations from Ace to King, unlimited stock recycling. Changing draw mode keeps the current deal. Exposed cards flip automatically. Foundation cards may return to the tableau. Complete all foundations to win. The yellow selector surrounds the whole card. Cards slide between piles, and newly revealed cards flip with a brief edge-on transition. Animations pause with the game and allow responsive follow-up moves.
 
 ## Snake
 
-D-pad changes direction. Eat red food to grow and score 10 points; speed increases with score. Avoid walls and your own body. Reversing into your neck is prevented. Filling the board wins. A retries after game over.
+D-pad changes direction. Eat red food to grow and score 10 points; speed increases with score. Avoid walls and your own body. Reversing into your neck is prevented. Filling the board wins. Eating triggers a golden burst, floating score, and a growth pulse along the body. A retries after game over.
 
 B, Start or Select pauses. Choose Resume, New Game or Back to Games.
 
@@ -32,7 +32,7 @@ B, Start or Select pauses. Choose Resume, New Game or Back to Games.
 - B/Start/Select: pause with Resume, New Game or Back to Games.
 - A after game over: retry.
 
-Seven shuffled pieces per bag, next-piece preview, landing outline, row clearing and increasing gravity every ten lines. Clear 1/2/3/4 rows for 100/300/500/800 points times the current level; soft/hard drop adds 1/2 points per cell. Stack above the board or block the spawn to end the game. Uses immediate locking on contact and simple wall kicks.
+Seven shuffled pieces per bag, next-piece preview, landing outline, row clearing and increasing gravity every ten lines. Clear 1/2/3/4 rows for 100/300/500/800 points times the current level; soft/hard drop adds 1/2 points per cell. Stack above the board or block the spawn to end the game. Uses immediate locking on contact and simple wall kicks. Cleared rows flash and shrink, then the blocks above settle downward. Gravity and piece controls wait for the 0.48-second clear animation; pausing freezes it.
 
 ## Display and engine adapters
 
@@ -46,8 +46,8 @@ Run with Python and `lupa` installed:
 
     python tests/run.py /path/to/gen1recomp-0.3.54
 
-Tests cover Klondike rules and controls; Snake growth, collisions, turns and victory; Tetris bags, rotation, clears, levels and top-out; game timers, pause, retry and submenu navigation. The native-menu integration suite tours all three games and returns to the same PC across all eleven game IDs. ROM text/font/chrome and graphics/audio are fixture substitutes, not eleven ROM-backed playthroughs.
+On engines 0.3.54 and 0.3.58, 8,805 assertions pass per engine, plus manifest validation. Tests cover animation timing, rule-state isolation, pause/resume, direct native PC integration, Klondike rules and controls; Snake growth, collisions, turns and victory; Tetris bags, rotation, clears, levels and top-out; game timers, pause, retry and submenu navigation. The native-menu integration suite tours all three games and returns to the same PC across all eleven game IDs. ROM text/font/chrome and graphics/audio are fixture substitutes, not eleven ROM-backed playthroughs.
 
-Real LOVE renders at both native resolutions cover the submenu, Snake, Tetris, pause and game-over states. Screenshots are in `docs/`.
+Real LOVE renders at both native resolutions cover the submenu, Snake, Tetris, pause and game-over states, plus animation frame sequences. Animated previews are in `docs/effects-160.gif` and `docs/effects-240.gif`.
 
 Card faces are extracted from the user-provided `Poker cards 1.3.zip`. No author/license document accompanied it. The patterned back and procedural fallback are original. See `ASSET_CREDITS.md`.
