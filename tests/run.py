@@ -17,4 +17,3 @@ manifest=json.loads((root/'manifest.json').read_text())
 lua.globals().manifest=table(manifest)
 lua.execute("local M=require('src.mods.Manifest');M.validate(manifest)")
 print('Manifest validation: PASS')
-
