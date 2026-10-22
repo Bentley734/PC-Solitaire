@@ -129,7 +129,7 @@ function Screen:draw()
       g.setColor(0.4,0.8,1,1);g.rectangle('line',x(col)-1,base+(self.held.index-1)*dy-1,cw+2,ch+2)
     end
   end
-  g.setColor(1,0.88,0.1,1);g.rectangle('line',x(self.col)-1,focusY-1,cw+2,(self.row==1 and 7 or ch)+2)
+  g.setColor(1,0.88,0.1,1);g.rectangle('line',x(self.col)-1,focusY-1,cw+2,ch+2)
   local ref=self:ref();local p=Logic.pile(self.state,ref);local c=p and p[ref.index or #p]
   local detail=c and c.up and (({[1]='A',[11]='J',[12]='Q',[13]='K'})[c.rank] or c.rank)..' '..c.suit:upper() or (self.row==0 and self.col==1 and ('STOCK '..#self.state.stock) or 'EMPTY')
   g.setColor(0.02,0.15,0.09,1);g.rectangle('fill',0,self.h-16,self.w,16)

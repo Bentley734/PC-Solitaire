@@ -1,4 +1,4 @@
-# PC Solitaire 1.0.0
+# PC Solitaire 1.0.1
 
 Klondike Solitaire for Gen1Recomp Mod API v2, targeting engine 0.3.54 through 0.3.x.
 
@@ -32,3 +32,7 @@ Run all tests with Python and `lupa` installed:
 `main.lua` uses the public `ui.pc.items` hook for Gen 1 and Gen 2 direct PCs. Small engine adapters cover the Gen 1 bedroom constructor, Gen 2 hub/item menu dispatch, and Gen 3 root list, bedroom entry and modal stack. Gen 3 script result indexes for built-in PC entries stay unchanged. Engine internals permission is declared because these menu surfaces do not all expose a public PC hub hook. Controls only read abstract `wasPressed` actions.
 
 Card artwork was extracted from the user-supplied `Poker cards 1.3.zip`, `minicards.png`. No author or license document accompanied that archive. The patterned card back and procedural fallback are original to this mod. See `ASSET_CREDITS.md`.
+
+## 1.0.1
+
+The yellow selector surrounds the entire focused card in both native layouts, including tableau cards.
