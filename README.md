@@ -1,4 +1,4 @@
-# PC Games 1.3.2
+# PC Games 1.3.3
 
 Solitaire, Snake, Tetris, Blackjack and Collapse in a **GAMES** submenu on every in-game PC. Supports Red, Blue, Yellow, Gold, Silver, Crystal, FireRed, LeafGreen, Ruby, Sapphire and Emerald with Mod API v2 (Gen1Recomp >=0.3.54 <0.4.0).
 
@@ -61,3 +61,5 @@ Real LOVE renders at both native resolutions cover the submenu, Snake, Tetris, p
 Card faces are extracted from the user-provided `Poker cards 1.3.zip`. No author/license document accompanied it. The patterned back and procedural fallback are original. See `ASSET_CREDITS.md`.
 
 The update source in `manifest.json` is `"github": "Bentley734/PC-Solitaire"`.
+
+Games appears directly above Log Off in PC hubs; native script Log Off results are preserved.

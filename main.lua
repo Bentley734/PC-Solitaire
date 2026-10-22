@@ -66,15 +66,22 @@ mod.events:on('game.ready',function(ev)
   if generation==3 then
     local PC=require('src.ui.game3.pc_menu')
     patch(PC,'_rootEntries',function(original) return function(...)
-      -- Copy cached rows: script result indexes for all builtins must stay unchanged.
+      -- Copy cached rows and place Games immediately before Log Off.
       local rows={};for i,r in ipairs(original(...)) do rows[i]=r end
-      rows[#rows+1]={id='pc_solitaire',label='GAMES'}
+      local at=#rows+1
+      for i,r in ipairs(rows)do if r.id=='quit'then at=i;break end end
+      table.insert(rows,at,{id='pc_solitaire',label='GAMES'})
       return rows
     end end)
     patch(PC,'handleInput',function(original) return function(input)
       if PC.open and PC.mode=='root' then
         local r=PC._rootEntries()[PC.cursor]
         if r and r.id=='pc_solitaire' and input:wasPressed('a') then open(liveGame,true);return end
+        if r and r.id=='quit' and PC._select and input:wasPressed('a') then
+          -- Script menus expect the original zero-based Log Off result.
+          PC._silentClose=true
+          return PC.close(PC.cursor-2)
+        end
       end
       if PC.open and PC.mode=='player_pc' then
         local Profile=require('src.core.game3.profile')

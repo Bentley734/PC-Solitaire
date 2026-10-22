@@ -75,10 +75,14 @@ for _,id in ipairs({'red','blue','yellow','gold','silver','crystal','firered','l
  else
   local PC=require('src.ui.game3.pc_menu');local Stack=require('src.ui.game3.stack');Stack.clear()
   local session={name='TEST',version=id,party={}}
-  PC.show({session=session,startMode='select'});local rows=PC._rootEntries();ok(rows[#rows].id=='pc_solitaire','Gen3 row');ok(#PC._rootEntries()==#rows,'no duplicate')
-  PC.cursor=#rows;g.input.pressed={a=true};PC.handleInput(g.input);local layer=Stack.top();ok(layer.id=='pc_solitaire','Gen3 open');layer.mod.draw();layer.mod.update(.1);g:draw();ok(not g.nativeDraws,'Gen3 integer presenter')
-  tour(g,layer.mod.handleInput,layer.mod.draw);ok(Stack.top().id=='pc_menu' and PC.open and PC.cursor==#rows,'Gen3 return')
-  PC.close();PC.show({session=session,startMode='player_pc',bedroom=true})
+  PC.show({session=session,startMode='select'});local rows=PC._rootEntries();ok(rows[#rows-1].id=='pc_solitaire' and rows[#rows].id=='quit','Games directly before Log Off');ok(#PC._rootEntries()==#rows,'no duplicate')
+  PC.cursor=#rows-1;g.input.pressed={a=true};PC.handleInput(g.input);local layer=Stack.top();ok(layer.id=='pc_solitaire','Gen3 open');layer.mod.draw();layer.mod.update(.1);g:draw();ok(not g.nativeDraws,'Gen3 integer presenter')
+  tour(g,layer.mod.handleInput,layer.mod.draw);ok(Stack.top().id=='pc_menu' and PC.open and PC.cursor==#rows-1,'Gen3 return')
+  g.input.pressed={down=true};PC.handleInput(g.input);g.input.pressed={a=true};PC.handleInput(g.input);g.input.pressed={}
+  ok(not PC.open and PC._result==#rows-2,'Log Off preserves native script result')
+  PC.show({session=session});PC.cursor=#PC._rootEntries();g.input.pressed={a=true};PC.handleInput(g.input);g.input.pressed={}
+  ok(not PC.open,'non-script Log Off still closes')
+  PC.show({session=session,startMode='player_pc',bedroom=true})
   ok(Stack.top().id=='pc_menu' and Stack.depth()==1,'Gen3 bedroom native menu only')
   ok(PC.mode=='player_pc','Gen3 original PC mode')
   local order
