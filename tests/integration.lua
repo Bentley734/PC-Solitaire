@@ -1,0 +1,69 @@
+-- Runs against the real 0.3.54 PC modules using headless graphics/audio.
+local root=assert(arg[1]);local engine=assert(arg[2]);package.path=engine..'/?.lua;'..package.path
+local function noop() end
+love={graphics={getColor=function() return 1,1,1,1 end,setColor=noop,rectangle=noop,print=noop,printf=noop,draw=noop,newQuad=function()return {}end,newImage=function()error('fallback')end,getShader=noop,setShader=noop,newShader=function()error('headless')end,getDimensions=function()return 160,144 end,push=noop,pop=noop,translate=noop,scale=noop,circle=noop,clear=noop,setLineWidth=noop},math={random=math.random},filesystem={load=noop,getInfo=noop,read=noop,write=function()return true end,remove=function()return true end,newFileData=function(bytes)return bytes end},timer={getTime=function()return 0 end}}
+local Runtime=require('src.mods.Runtime');local Version=require('src.core.GameVersion')
+-- ROM-owned strings are a fixture; menu code, stacks and dispatch stay native.
+local RomText=require('src.core.game3.rom_text')
+RomText.plain=function(key)return key end
+RomText.lazy=function(t)return t end
+require('src.ui.game3.chrome').stdFrame=function()end
+require('src.ui.game3.frlg_font').draw=function()end
+require('src.ui.game3.frlg_font').drawGlyph=function()end
+local checks=0
+local function ok(v,msg) assert(v,msg);checks=checks+1 end
+local function read(path) local f=io.open(root..'/'..path,'rb');if not f then return end;local b=f:read('*a');f:close();return b end
+local function newGame()
+ local g={data={},save={party={{species=1}},player={name='TEST'},engineFlags={}},input={pressed={}}}
+ function g.input:wasPressed(k) return self.pressed[k] or false end
+ g.stack={states={}};function g.stack:push(s) self.states[#self.states+1]=s end;function g.stack:pop() return table.remove(self.states) end;function g.stack:top() return self.states[#self.states] end
+ return g
+end
+local hooks,events={},{}
+local mod={read=function(_,path)return read(path)end,hooks={wrap=function(_,name,fn)hooks[name]=fn end},events={on=function(_,name,fn)events[name]=fn end},exports={}}
+assert(load(read('main.lua')))()(mod)
+-- Wire the public hook into the native constructors without a full loader boot.
+local oldCall=Runtime.call
+Runtime.call=function(name,next,...) if hooks[name] then return hooks[name](next,...) end;return oldCall(name,next,...) end
+local function exit(g,s)
+ g.input.pressed={b=true};s:update(.1);g.input.pressed={a=true};s:update(.1);g.input.pressed={}
+end
+for _,id in ipairs({'red','blue','yellow','gold','silver','crystal','firered','leafgreen','ruby','sapphire','emerald'}) do
+ Version.set(id);local g=newGame();events['game.ready']({game=g})
+ if Version.generation()==1 then
+  local rows=hooks['ui.pc.items'](function(_,r)return r end,g,{{label='PC'}})
+  ok(#rows==2 and rows[2].keepOpen,'Gen1 hub injection')
+  local parent={};g.stack:push(parent);rows[2].onSelect();local s=g.stack:top();ok(s~=parent and s.w==160,'Gen1 open');s:draw();exit(g,s);ok(g.stack:top()==parent,'Gen1 return')
+  local P=require('src.ui.PlayerPC');local p=P.new(g,{direct=true});ok(p.items[#p.items-1].label=='SOLITAIRE','Gen1 bedroom')
+ elseif Version.generation()==2 then
+  local Hub=require('src.ui.gen2.CenterPcMenu');local p=Hub.new(g);local index
+  for i,r in ipairs(p.entries)do if r.label=='SOLITAIRE' then index=i end end
+  ok(index and index==#p.entries-1,'Gen2 hub');p.index=index;g.stack:push(p);p:choose();local s=g.stack:top();ok(s~=p and s.w==160,'Gen2 open');s:draw();exit(g,s);ok(g.stack:top()==p,'Gen2 return')
+  g.save.engineFlags[11]=true;g.save.hallOfFame={count=1};p:buildEntries()
+  ok(#p.entries==6,'Gen2 postgame rows')
+  local Chrome=require('src.ui.gen2.Chrome')
+  local oldBox,oldPrint,oldCursor=Chrome.box,Chrome.print,Chrome.cursor
+  local solitaireY
+  Chrome.box=noop;Chrome.cursor=noop
+  Chrome.print=function(label,_,y)if label=='SOLITAIRE' then solitaireY=y end end
+  p.message=nil;p.booted=true;p:drawPanel()
+  ok(solitaireY and solitaireY<12,'Gen2 postgame row above dialogue')
+  Chrome.box,Chrome.print,Chrome.cursor=oldBox,oldPrint,oldCursor
+  for _,name in ipairs({'src.ui.gen2.PcMenu','src.ui.gen2.ItemPcMenu'}) do
+   local c=require(name).new(g,{house=true});local found
+   for i,r in ipairs(c.entries) do if r.label=='SOLITAIRE' then found=i end end
+   ok(found,'Gen2 direct PC row');c.index=found;g.stack:push(c);c:choose();s=g.stack:top();ok(s~=c,'Gen2 direct open');exit(g,s);ok(g.stack:top()==c,'Gen2 direct return')
+  end
+ else
+  local PC=require('src.ui.game3.pc_menu');local Stack=require('src.ui.game3.stack');Stack.clear()
+  local session={name='TEST',version=id,party={}}
+  PC.show({session=session,startMode='select'});local rows=PC._rootEntries();ok(rows[#rows].id=='pc_solitaire','Gen3 row');ok(#PC._rootEntries()==#rows,'no duplicate')
+  PC.cursor=#rows;g.input.pressed={a=true};PC.handleInput(g.input);local layer=Stack.top();ok(layer.id=='pc_solitaire','Gen3 open');layer.mod.draw();layer.mod.update(.1)
+  g.input.pressed={b=true};layer.mod.handleInput(g.input);g.input.pressed={a=true};layer.mod.handleInput(g.input);g.input.pressed={};ok(Stack.top().id=='pc_menu' and PC.open and PC.cursor==#rows,'Gen3 return')
+  PC.close();PC.show({session=session,startMode='player_pc',bedroom=true});ok(Stack.top().id=='pc_solitaire_bedroom','Gen3 bedroom choices');Stack.top().mod.draw()
+  g.input.pressed={down=true};Stack.top().mod.handleInput(g.input);g.input.pressed={a=true};Stack.top().mod.handleInput(g.input);ok(Stack.top().id=='pc_solitaire','Gen3 bedroom open')
+  layer=Stack.top();g.input.pressed={b=true};layer.mod.handleInput(g.input);g.input.pressed={a=true};layer.mod.handleInput(g.input);g.input.pressed={};ok(Stack.top().id=='pc_solitaire_bedroom' and PC.open,'Gen3 bedroom return')
+ end
+ print('PC adapters passed: '..id)
+end
+print('Native integration assertions: '..checks)

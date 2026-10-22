@@ -1,0 +1,28 @@
+{
+  "id": "pc_solitaire",
+  "name": "PC Solitaire",
+  "version": "1.0.0",
+  "api": 2,
+  "main": "main.lua",
+  "entry": "main.lua",
+  "profile": "content",
+  "games": [
+    "red",
+    "blue",
+    "yellow",
+    "gold",
+    "silver",
+    "crystal",
+    "firered",
+    "leafgreen",
+    "ruby",
+    "sapphire",
+    "emerald"
+  ],
+  "game_version": ">=0.3.54 <0.4.0",
+  "permissions": [
+    "engine_internals"
+  ],
+  "github": "Bentley734/PC-Solitaire",
+  "description": "Play Klondike Solitaire from any PC, across all eleven games."
+}
