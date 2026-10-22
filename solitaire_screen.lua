@@ -138,9 +138,10 @@ function Screen:draw()
     local px=math.floor((self.w-126)/2);local py=math.floor((self.h-67)/2)
     g.setColor(0.03,0.12,0.09,1);g.rectangle('fill',px,py,126,67);g.setColor(1,1,0.8,1);g.rectangle('line',px,py,126,67)
     text('PAUSED',px+8,py+5)
-    for i,label in ipairs({'RESUME','NEW DEAL','DRAW '..self.state.draw..' / TOGGLE','QUIT TO PC'}) do text((i==self.menu and '> ' or '  ')..label,px+7,py+8+i*11) end
+    for i,label in ipairs({'RESUME','NEW DEAL','DRAW '..self.state.draw..' / TOGGLE',self.exitLabel or 'QUIT TO PC'}) do text((i==self.menu and '> ' or '  ')..label,px+7,py+8+i*11) end
   end
   g.pop()
 end
+Screen.text=text
 return Screen
 end

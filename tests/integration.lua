@@ -25,19 +25,25 @@ assert(load(read('main.lua')))()(mod)
 -- Wire the public hook into the native constructors without a full loader boot.
 local oldCall=Runtime.call
 Runtime.call=function(name,next,...) if hooks[name] then return hooks[name](next,...) end;return oldCall(name,next,...) end
-local function exit(g,s)
- g.input.pressed={b=true};s:update(.1);g.input.pressed={a=true};s:update(.1);g.input.pressed={}
+local function tour(g,handle,draw)
+ local function press(key)g.input.pressed={[key]=true};handle(g.input);g.input.pressed={}end
+ -- Each game must return to the same submenu before it can return to the PC.
+ press('a');draw();press('b');press('a') -- Solitaire -> Games
+ press('down');press('a');draw();press('b');press('down');press('down');press('a') -- Snake -> Games
+ press('down');press('a');draw();press('b');press('down');press('down');press('a') -- Tetris -> Games
+ press('b')
 end
+local function exit(g,s)tour(g,function(input)s:handle(input)end,function()s:draw()end)end
 for _,id in ipairs({'red','blue','yellow','gold','silver','crystal','firered','leafgreen','ruby','sapphire','emerald'}) do
  Version.set(id);local g=newGame();events['game.ready']({game=g})
  if Version.generation()==1 then
   local rows=hooks['ui.pc.items'](function(_,r)return r end,g,{{label='PC'}})
   ok(#rows==2 and rows[2].keepOpen,'Gen1 hub injection')
   local parent={};g.stack:push(parent);rows[2].onSelect();local s=g.stack:top();ok(s~=parent and s.w==160,'Gen1 open');s:draw();exit(g,s);ok(g.stack:top()==parent,'Gen1 return')
-  local P=require('src.ui.PlayerPC');local p=P.new(g,{direct=true});ok(p.items[#p.items-1].label=='SOLITAIRE','Gen1 bedroom')
+  local P=require('src.ui.PlayerPC');local p=P.new(g,{direct=true});ok(p.items[#p.items-1].label=='GAMES','Gen1 bedroom')
  elseif Version.generation()==2 then
   local Hub=require('src.ui.gen2.CenterPcMenu');local p=Hub.new(g);local index
-  for i,r in ipairs(p.entries)do if r.label=='SOLITAIRE' then index=i end end
+  for i,r in ipairs(p.entries)do if r.label=='GAMES' then index=i end end
   ok(index and index==#p.entries-1,'Gen2 hub');p.index=index;g.stack:push(p);p:choose();local s=g.stack:top();ok(s~=p and s.w==160,'Gen2 open');s:draw();exit(g,s);ok(g.stack:top()==p,'Gen2 return')
   g.save.engineFlags[11]=true;g.save.hallOfFame={count=1};p:buildEntries()
   ok(#p.entries==6,'Gen2 postgame rows')
@@ -45,13 +51,13 @@ for _,id in ipairs({'red','blue','yellow','gold','silver','crystal','firered','l
   local oldBox,oldPrint,oldCursor=Chrome.box,Chrome.print,Chrome.cursor
   local solitaireY
   Chrome.box=noop;Chrome.cursor=noop
-  Chrome.print=function(label,_,y)if label=='SOLITAIRE' then solitaireY=y end end
+  Chrome.print=function(label,_,y)if label=='GAMES' then solitaireY=y end end
   p.message=nil;p.booted=true;p:drawPanel()
   ok(solitaireY and solitaireY<12,'Gen2 postgame row above dialogue')
   Chrome.box,Chrome.print,Chrome.cursor=oldBox,oldPrint,oldCursor
   for _,name in ipairs({'src.ui.gen2.PcMenu','src.ui.gen2.ItemPcMenu'}) do
    local c=require(name).new(g,{house=true});local found
-   for i,r in ipairs(c.entries) do if r.label=='SOLITAIRE' then found=i end end
+   for i,r in ipairs(c.entries) do if r.label=='GAMES' then found=i end end
    ok(found,'Gen2 direct PC row');c.index=found;g.stack:push(c);c:choose();s=g.stack:top();ok(s~=c,'Gen2 direct open');exit(g,s);ok(g.stack:top()==c,'Gen2 direct return')
   end
  else
@@ -59,10 +65,10 @@ for _,id in ipairs({'red','blue','yellow','gold','silver','crystal','firered','l
   local session={name='TEST',version=id,party={}}
   PC.show({session=session,startMode='select'});local rows=PC._rootEntries();ok(rows[#rows].id=='pc_solitaire','Gen3 row');ok(#PC._rootEntries()==#rows,'no duplicate')
   PC.cursor=#rows;g.input.pressed={a=true};PC.handleInput(g.input);local layer=Stack.top();ok(layer.id=='pc_solitaire','Gen3 open');layer.mod.draw();layer.mod.update(.1)
-  g.input.pressed={b=true};layer.mod.handleInput(g.input);g.input.pressed={a=true};layer.mod.handleInput(g.input);g.input.pressed={};ok(Stack.top().id=='pc_menu' and PC.open and PC.cursor==#rows,'Gen3 return')
+  tour(g,layer.mod.handleInput,layer.mod.draw);ok(Stack.top().id=='pc_menu' and PC.open and PC.cursor==#rows,'Gen3 return')
   PC.close();PC.show({session=session,startMode='player_pc',bedroom=true});ok(Stack.top().id=='pc_solitaire_bedroom','Gen3 bedroom choices');Stack.top().mod.draw()
   g.input.pressed={down=true};Stack.top().mod.handleInput(g.input);g.input.pressed={a=true};Stack.top().mod.handleInput(g.input);ok(Stack.top().id=='pc_solitaire','Gen3 bedroom open')
-  layer=Stack.top();g.input.pressed={b=true};layer.mod.handleInput(g.input);g.input.pressed={a=true};layer.mod.handleInput(g.input);g.input.pressed={};ok(Stack.top().id=='pc_solitaire_bedroom' and PC.open,'Gen3 bedroom return')
+  layer=Stack.top();tour(g,layer.mod.handleInput,layer.mod.draw);ok(Stack.top().id=='pc_solitaire_bedroom' and PC.open,'Gen3 bedroom return')
  end
  print('PC adapters passed: '..id)
 end

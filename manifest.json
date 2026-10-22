@@ -1,7 +1,7 @@
 {
   "id": "pc_solitaire",
-  "name": "PC Solitaire",
-  "version": "1.0.1",
+  "name": "PC Games",
+  "version": "1.1.0",
   "api": 2,
   "main": "main.lua",
   "entry": "main.lua",
@@ -24,5 +24,5 @@
     "engine_internals"
   ],
   "github": "Bentley734/PC-Solitaire",
-  "description": "Play Klondike Solitaire from any PC, across all eleven games."
+  "description": "Solitaire, Snake and Tetris in a Games submenu on every PC across all eleven games."
 }
