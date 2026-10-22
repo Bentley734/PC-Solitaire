@@ -24,20 +24,6 @@ ok(not R.removeGroup(c,4,12),'small group rejected');ok(#R.group(c,0,12)==0,'inv
 c.board[11][4]=2;c.board[11][5]=2;ok(#R.group(c,4,12)==3,'orthogonal floodfill')
 local score=c.score;R.rise(c);ok(c.rows==1 and c.board[12][1]==2 and c.board[11][1]==3 and c.score==score,'rising row')
 c.board[1][1]=1;R.rise(c);ok(c.over,'top out');ok(not R.removeGroup(c,4,12),'game over inert')
-for seed=1,100 do
- math.randomseed(seed);local m=R.mahjong();local counts={}
- for y=1,4 do for x=1,6 do local v=m.board[y][x];counts[v]=(counts[v]or 0)+1 end end
- for v=1,12 do ok(counts[v]==2,'paired tiles')end
- ok(not R.free(m,3,2),'interior blocked');ok(not R.match(m,{x=1,y=1},{x=1,y=1}),'same tile invalid')
- for _,pair in ipairs(m.solution)do
-  ok(R.free(m,pair[1].x,pair[1].y)and R.free(m,pair[2].x,pair[2].y),'both exposed before match')
-  ok(R.match(m,pair[1],pair[2]),'generated solution legal')
- end
- ok(m.won and m.pairs==12 and m.score==240,'solved board')
- m=R.mahjong();local pair=m.solution[1];R.match(m,pair[1],pair[2]);R.shuffle(m);ok(m.score==10,'shuffle score cost')
- for _,p in ipairs(m.solution)do ok(R.match(m,p[1],p[2]),'reshuffle solvable')end
- ok(m.won,'reshuffle win')
-end
 local function read(path)local f=assert(io.open(root..'/'..path));local b=f:read('*a');f:close();return b end
 love={graphics={newImage=function()error('fallback')end},filesystem={newFileData=function()end}}
 local S=assert(load(read('solitaire_screen.lua')))()({read=function()return nil end},dofile(root..'/solitaire_logic.lua'))
@@ -46,16 +32,15 @@ local G=assert(load(read('games_screen.lua')))()(S,dofile(root..'/arcade_logic.l
 local input={pressed={}};function input:wasPressed(k)return self.pressed[k]end
 local closed=0;local host=G.new({input=input},160,144,function()closed=closed+1 end)
 local function press(k)input.pressed={[k]=true};host:handle(input);input.pressed={}end
-for index=4,6 do
+for index=4,5 do
  host.index=index;press('a');ok(host.child and host.child.kind==index-3,'extra game launch')
  local child=host.child
  if index==5 then
   local rows=child.state.rows;host:tick(8.1);ok(child.state.rows==rows+1,'collapse timer')
- elseif index==6 then
-  press('select');ok(child.hints and #child.hints==2,'mahjong hint control')
+
  end
  press('start');local clock=child.clock;host:tick(20);ok(child.clock==clock,'pause freezes extra games')
  press('down');press('down');press('a');ok(not host.child and not host.mode and host.index==index,'extra submenu return')
 end
-host.index=7;press('a');ok(closed==1,'back pc new index')
+host.index=6;press('a');ok(closed==1,'back pc new index')
 print('Additional game assertions: '..n)

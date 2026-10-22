@@ -36,7 +36,7 @@ local function tour(g,handle,draw)
  press('a');draw();press('b');press('a') -- Solitaire -> Games
  press('down');press('a');draw();press('b');press('down');press('down');press('a') -- Snake -> Games
  press('down');press('a');draw();press('b');press('down');press('down');press('a') -- Tetris -> Games
- for _=4,6 do
+ for _=4,5 do
   press('down');press('a');draw();press('start');press('down');press('down');press('a')
  end
  press('b')

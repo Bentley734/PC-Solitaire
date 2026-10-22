@@ -1,4 +1,4 @@
--- Standalone rules for Blackjack, rising-block Collapse and mini Mahjong Solitaire.
+-- Standalone rules for Blackjack and rising-block Collapse.
 local M={}
 function M.total(hand)
  local total,aces=0,0
@@ -73,50 +73,5 @@ function M.rise(s)
  if s.over then return end
  for x=1,10 do if s.board[1][x]then s.over=true;return end end
  table.remove(s.board,1);local row={};for x=1,10 do row[x]=s.random(4)end;s.board[12]=row;s.rows=s.rows+1
-end
-function M.free(s,x,y)
- if x<1 or x>6 or y<1 or y>4 or not s.board[y][x]then return false end
- return x==1 or x==6 or not s.board[y][x-1]or not s.board[y][x+1]
-end
-local function arrange(s,values)
- local occupied={board={}}
- for y=1,4 do occupied.board[y]={};for x=1,6 do occupied.board[y][x]=s.board[y][x]and true or nil end end
- local solution={}
- for _,value in ipairs(values)do
-  local pair={}
-  local free={};for y=1,4 do for x=1,6 do if M.free(occupied,x,y)then free[#free+1]={x=x,y=y}end end end
-  for _=1,2 do
-   local p=table.remove(free,s.random(#free));pair[#pair+1]=p;occupied.board[p.y][p.x]=nil;s.board[p.y][p.x]=value
-  end
-  solution[#solution+1]=pair
- end
- s.solution=solution
-end
-function M.mahjong(random)
- local s={board={},score=0,pairs=0,random=random or math.random}
- for y=1,4 do s.board[y]={};for x=1,6 do s.board[y][x]=true end end
- local values={};for i=1,12 do values[i]=i end
- for i=12,2,-1 do local j=s.random(i);values[i],values[j]=values[j],values[i]end
- arrange(s,values);return s
-end
-function M.match(s,a,b)
- if s.over or(a.x==b.x and a.y==b.y)or not M.free(s,a.x,a.y)or not M.free(s,b.x,b.y)then return false end
- if s.board[a.y][a.x]~=s.board[b.y][b.x]then return false end
- s.board[a.y][a.x]=nil;s.board[b.y][b.x]=nil;s.pairs=s.pairs+1;s.score=s.score+20
- if s.pairs==12 then s.won=true;s.over=true end
- return true
-end
-function M.hint(s)
- local seen={}
- for y=1,4 do for x=1,6 do if M.free(s,x,y)then
-  local v=s.board[y][x];if seen[v]then return seen[v],{x=x,y=y}end;seen[v]={x=x,y=y}
- end end end
-end
-function M.shuffle(s)
- if s.over then return end
- local counts={};for y=1,4 do for x=1,6 do local v=s.board[y][x];if v then counts[v]=(counts[v]or 0)+1 end end end
- local values={};for v=1,12 do for _=1,(counts[v]or 0)/2 do values[#values+1]=v end end
- for i=#values,2,-1 do local j=s.random(i);values[i],values[j]=values[j],values[i]end
- arrange(s,values);s.score=math.max(0,s.score-10)
 end
 return M

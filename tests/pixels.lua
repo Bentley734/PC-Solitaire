@@ -23,14 +23,13 @@ local G=assert(load(read('games_screen.lua')))()(S,R,Extra)
 local game={input={wasPressed=function()return false end}}
 for _,size in ipairs({{160,144},{240,160}})do
  local host=G.new(game,size[1],size[2],noop);host:draw();frames=frames+1
- for i=1,6 do
+ for i=1,5 do
   host:launch(i)
   if i==1 then host.child:act()
   elseif i==2 then local h=host.state.body[1];host.state.food={x=h.x+1,y=h.y};host:tick(.18)
   elseif i==3 then local s=host.state;s.piece={id=1,x=4,y=18,rot=0};s.board[18][2]=3;for x=1,10 do if x<4 or x>7 then s.board[20][x]=2 end end;host:drop(true)
   elseif i==4 then host.child.fx={time=0}
-  elseif i==5 then host.child.fx={time=0,cells={{x=1,y=12},{x=2,y=12}}}
-  elseif i==6 then local s=host.child.state;local pair=s.solution[1];L.match(s,pair[1],pair[2]);host.child.fx={time=0,cells=pair}end
+  elseif i==5 then host.child.fx={time=0,cells={{x=1,y=12},{x=2,y=12}}}end
   for _=1,13 do host:draw();frames=frames+1;host:tick(.04)end
  end
 end

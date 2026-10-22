@@ -1,12 +1,12 @@
-# PC Games 1.3.0
+# PC Games 1.3.1
 
-Solitaire, Snake, Tetris, Blackjack, Collapse and mini Mahjong Solitaire in a **GAMES** submenu on every in-game PC. Supports Red, Blue, Yellow, Gold, Silver, Crystal, FireRed, LeafGreen, Ruby, Sapphire and Emerald with Mod API v2 (Gen1Recomp >=0.3.54 <0.4.0).
+Solitaire, Snake, Tetris, Blackjack and Collapse in a **GAMES** submenu on every in-game PC. Supports Red, Blue, Yellow, Gold, Silver, Crystal, FireRed, LeafGreen, Ruby, Sapphire and Emerald with Mod API v2 (Gen1Recomp >=0.3.54 <0.4.0).
 
 Install: extract `pc_solitaire` into `mods`, replacing the previous folder, enable **PC Games**, and restart the game. The folder, internal mod ID and GitHub repository remain unchanged so this upgrades PC Solitaire. Choose **GAMES** at any PC, including bedroom PCs. In Gen 3 player/bedroom PCs, GAMES is part of the native options list immediately before Turn Off; there is no extra Player PC / Games chooser.
 
 ## Menu and return
 
-Up/down chooses one of six games or Back to PC. A opens the highlighted game; B returns to the PC. Each game has a pause menu that returns to Games. The PC session and submenu selection stay in place. All game progress is temporary; Pokemon save data is untouched.
+Up/down chooses one of five games or Back to PC. A opens the highlighted game; B returns to the PC. Each game has a pause menu that returns to Games. The PC session and submenu selection stay in place. All game progress is temporary; Pokemon save data is untouched.
 
 ## Solitaire
 
@@ -40,13 +40,7 @@ A 52-card deck is shuffled for each hand. Choose Hit, Stand or Double with the D
 
 ## Collapse
 
-An original rising-block puzzle inspired by Collapse: move the cursor with the D-pad, press A on an orthogonally connected group of at least three identical blocks. Blocks fall down within their own columns after a clear. Each block is marked 1-4 as well as colored. A row rises every eight seconds initially, speeding up as the score grows; reaching the top ends the game. Groups score `n*(n-1)*5`. B/Start/Select pauses; A retries after game over. No copyrighted Collapse assets are used.
-
-## Mini Mahjong Solitaire
-
-A compact, single-layer 6x4 layout with twelve letter-marked pairs (A-L), chosen to remain readable on the Game Boy canvas. This is simplified Mahjong Solitaire, not four-player Mahjong or the full traditional 144-tile layout.
-
-D-pad moves the cursor; A selects a tile and its identical match. Both tiles must have a free left or right edge before removal. Bright tiles are free, dim tiles are blocked. B cancels a selection, then opens pause. Start pauses. Select highlights a legal pair; if no pairs are available, it reshuffles remaining tiles for 10 points. Every initial deal and reshuffle is generated with a legal solution. Clearing all twelve pairs wins, for 20 points per pair. A retries after winning.
+An original rising-block puzzle inspired by Collapse: move the cursor with the D-pad, press A on an orthogonally connected group of at least three identical blocks. Blocks fall down within their own columns after a clear. Blocks use solid colors without number labels. A row rises every eight seconds initially, speeding up as the score grows; reaching the top ends the game. Groups score `n*(n-1)*5`. B/Start/Select pauses; A retries after game over. No copyrighted Collapse assets are used.
 
 ## Display and engine adapters
 
@@ -60,7 +54,7 @@ Run with Python and `lupa` installed:
 
     python tests/run.py /path/to/gen1recomp-0.3.54
 
-Tests run against engines 0.3.54 and 0.3.58, plus manifest validation including the exact GitHub update source. The additional rules suite covers 100 shuffled Blackjack decks and 100 generated/reshuffled Mahjong solutions, Collapse clearing/gravity, and all extra-game pause/exit controls. Pixel checks exercise 158 frames, 884 sprite draws, and eight window/DPI layouts. Tests cover animation timing, rule-state isolation, pause/resume, direct native PC integration, Klondike rules and controls; Snake growth, collisions, turns and victory; Tetris bags, rotation, clears, levels and top-out; game timers, pause, retry and submenu navigation. The native-menu integration suite tours all six games and returns to the same PC across all eleven game IDs. ROM text/font/chrome and graphics/audio are fixture substitutes, not eleven ROM-backed playthroughs.
+Tests run against engines 0.3.54 and 0.3.58, plus manifest validation including the exact GitHub update source. The additional rules suite covers 100 shuffled Blackjack decks, Collapse clearing/gravity, and all extra-game pause/exit controls. Pixel checks exercise 132 frames, 884 sprite draws, and eight window/DPI layouts. Tests cover animation timing, rule-state isolation, pause/resume, direct native PC integration, Klondike rules and controls; Snake growth, collisions, turns and victory; Tetris bags, rotation, clears, levels and top-out; game timers, pause, retry and submenu navigation. The native-menu integration suite tours all five games and returns to the same PC across all eleven game IDs. ROM text/font/chrome and graphics/audio are fixture substitutes, not eleven ROM-backed playthroughs.
 
 Real LOVE renders at both native resolutions cover the submenu, Snake, Tetris, pause and game-over states, plus animation frame sequences. Animated previews are in `docs/effects-160.gif` and `docs/effects-240.gif`.
 
