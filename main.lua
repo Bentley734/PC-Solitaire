@@ -5,7 +5,9 @@ local function include(path)
 end
 local Logic=include('solitaire_logic.lua')
 local Solitaire=include('solitaire_screen.lua')(mod,Logic)
-local Screen=include('games_screen.lua')(Solitaire,include('arcade_logic.lua'))
+local More=include('more_screen.lua')(Solitaire,include('more_logic.lua'))
+local Screen=include('games_screen.lua')(Solitaire,include('arcade_logic.lua'),More)
+local Pixels=include('pixel_present.lua')
 local active,liveGame
 local function open(game,gen3)
   if active then return end
@@ -50,6 +52,17 @@ mod.events:on('game.ready',function(ev)
   local game=ev.game
   liveGame=game
   local generation=require('src.core.GameVersion').generation()
+  if type(game.draw)=='function' then
+    patch(game,'draw',function(original) return function(self,...)
+      local owned=active and active.game==self
+      if owned and generation==3 then
+        local top=require('src.ui.game3.stack').top()
+        owned=top and top.id=='pc_solitaire'
+      elseif owned then owned=self.stack:top()==active end
+      if owned then return Pixels.present(active)end
+      return original(self,...)
+    end end)
+  end
   if generation==3 then
     local PC=require('src.ui.game3.pc_menu')
     patch(PC,'_rootEntries',function(original) return function(...)

@@ -37,7 +37,7 @@ end
 -- Snapshot positions by card identity; rules still commit immediately.
 function Screen:positions()
   local out={};local step=math.floor((self.w-4)/7)
-  local base=self.w==160 and 40 or 52;local ch=self.w==160 and 24 or 36
+  local base=self.w==160 and 40 or 64;local ch=self.w==160 and 24 or 48
   local function add(p,col,y,dy,topOnly)
     for i,c in ipairs(p)do out[c]={x=3+(col-1)*step,y=y+(i-1)*(dy or 0),up=c.up,visible=not topOnly or i==#p,order=i}end
   end
@@ -130,14 +130,29 @@ function Screen:tick(dt)
   self.clock=self.clock+dt
   for c,e in pairs(self.effects or {})do if self.clock-e.start>=e.duration then self.effects[c]=nil end end
 end
-function Screen:card(c,x,y,w,h,animated)
+function Screen:card(c,x,y,w,h,animated,clipWidth)
   if c and not animated and self.effects and self.effects[c]then return end
   local g=love.graphics
-  local img=c and self.images[c.up and (c.suit..'_'..c.rank) or 'back']
+  local name=c and (c.up and (c.suit..'_'..c.rank) or 'back')
+  local img=name and self.images[name]
+  x=math.floor(x);y=math.floor(y)
   g.setColor(1,1,1,1)
-  if img then g.draw(img,x,y,0,w/img:getWidth(),h/img:getHeight());return end
+  if img then
+    local scale=math.max(1,math.floor(math.min(w/img:getWidth(),h/img:getHeight())))
+    if clipWidth and clipWidth<w then
+      -- Flip by cropping a central pixel strip, never by stretching the sprite.
+      local sw=math.max(1,math.floor(clipWidth/scale));local sx=math.floor((img:getWidth()-sw)/2)
+      self.quads=self.quads or {};local key=name..':'..sw
+      self.quads[key]=self.quads[key]or g.newQuad(sx,0,sw,img:getHeight(),img:getWidth(),img:getHeight())
+      g.draw(img,self.quads[key],x+math.floor((w-sw*scale)/2),y,0,scale,scale)
+    else g.draw(img,x,y,0,scale,scale)end
+    return
+  end
+  if clipWidth and clipWidth<w then
+    g.setColor(.75,.85,.7,1);g.rectangle('fill',x+math.floor((w-clipWidth)/2),y,clipWidth,h);return
+  end
   g.setColor(c and 0.96 or 0.1,c and 0.96 or 0.35,c and 0.87 or 0.24,1);g.rectangle('fill',x,y,w,h)
-  g.setColor(0.1,0.2,0.15,1);g.rectangle('line',x+0.5,y+0.5,w-1,h-1)
+  g.setColor(0.1,0.2,0.15,1);g.rectangle('line',x,y,w-1,h-1)
   if c then
     if c.up then
       local red=c.suit=='hearts' or c.suit=='diamonds'
@@ -151,11 +166,11 @@ function Screen:card(c,x,y,w,h,animated)
   end
 end
 function Screen:draw()
-  local g=love.graphics;g.push('all');g.setShader();g.setColor(0.035,0.28,0.17,1);g.rectangle('fill',0,0,self.w,self.h)
-  local step=math.floor((self.w-4)/7);local cw=self.w==160 and 16 or 24;local ch=self.w==160 and 24 or 36
+  local g=love.graphics;g.push('all');g.setShader();if g.setLineStyle then g.setLineStyle('rough')end;g.setColor(0.035,0.28,0.17,1);g.rectangle('fill',0,0,self.w,self.h)
+  local step=math.floor((self.w-4)/7);local cw=self.w==160 and 16 or 32;local ch=self.w==160 and 24 or 48
   local function x(c) return 3+(c-1)*step end
   g.setColor(1,1,0.8,1);text('SOLITAIRE  DRAW '..self.state.draw,3,2)
-  local topY,base=11,self.w==160 and 40 or 52
+  local topY,base=11,self.w==160 and 40 or 64
   self:card(self.state.stock[#self.state.stock],x(1),topY,cw,ch)
   self:card(self.state.waste[#self.state.waste],x(2),topY,cw,ch)
   for i=1,4 do local p=self.state.foundations[i];self:card(p[#p],x(i+3),topY,cw,ch) end
@@ -179,8 +194,7 @@ function Screen:draw()
     local face={suit=e.card.suit,rank=e.card.rank}
     -- Preserve false at the first half of a face-down -> face-up flip.
     if t<.5 then face.up=e.fromUp else face.up=e.toUp end
-    g.push();g.translate(px+math.floor((cw-width)/2),py);g.scale(width/cw,1)
-    self:card(face,0,0,cw,ch,true);g.pop()
+    self:card(face,px,py,cw,ch,true,width)
   end
   g.setColor(1,0.88,0.1,1);g.rectangle('line',x(self.col)-1,focusY-1,cw+2,ch+2)
   local ref=self:ref();local p=Logic.pile(self.state,ref);local c=p and p[ref.index or #p]

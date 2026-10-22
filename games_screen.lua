@@ -1,4 +1,4 @@
-return function(Solitaire,Rules)
+return function(Solitaire,Rules,More)
 local Games={};Games.__index=Games
 local colors={{0.1,0.9,0.95},{1,0.85,0.15},{0.7,0.35,1},{0.25,0.9,0.4},{1,0.3,0.35},{0.3,0.5,1},{1,0.6,0.2}}
 local text=Solitaire.text
@@ -11,7 +11,11 @@ function Games:launch(index)
   self.child=Solitaire.new(self.game,self.w,self.h,function()self.child=nil;self.mode=nil end)
   self.child.exitLabel='QUIT TO GAMES';self.mode='solitaire'
  elseif index==2 then self.mode='snake';self.state=Rules.snake()
- else self.mode='tetris';self.state=Rules.tetris() end
+ elseif index==3 then self.mode='tetris';self.state=Rules.tetris()
+ else
+  assert(More,'Extra game screens unavailable')
+  self.child=More.new(self.game,self.w,self.h,function()self.child=nil;self.mode=nil end,index-3);self.mode=({'blackjack','collapse','mahjong'})[index-3]
+ end
 end
 function Games:tick(dt)
  self.clock=self.clock+dt
@@ -60,9 +64,9 @@ function Games:handle(input)
  if self.closed then return end
  if self.child then self.child:handle(input);return end
  if not self.mode then
-  if input:wasPressed('up')then self.index=(self.index-2)%4+1
-  elseif input:wasPressed('down')then self.index=self.index%4+1
-  elseif input:wasPressed('b')or (input:wasPressed('a')and self.index==4)then self.closed=true;self.close()
+  if input:wasPressed('up')then self.index=(self.index-2)%7+1
+  elseif input:wasPressed('down')then self.index=self.index%7+1
+  elseif input:wasPressed('b')or (input:wasPressed('a')and self.index==7)then self.closed=true;self.close()
   elseif input:wasPressed('a')then self:launch(self.index)end
   return
  end
@@ -94,13 +98,13 @@ end
 function Games:update(dt)self:handle(self.game.input);self:tick(dt)end
 function Games:draw()
  if self.child then return self.child:draw()end
- local g=love.graphics;g.push('all');g.setShader();g.setColor(.025,.07,.12,1);g.rectangle('fill',0,0,self.w,self.h)
+ local g=love.graphics;g.push('all');g.setShader();if g.setLineStyle then g.setLineStyle('rough')end;g.setColor(.025,.07,.12,1);g.rectangle('fill',0,0,self.w,self.h)
  g.setColor(.7,1,.8,1);text(self.mode and self.mode:upper() or 'PC GAMES',6,5)
  if not self.mode then
-  text('CHOOSE A GAME',12,25)
-  for i,label in ipairs({'SOLITAIRE','SNAKE','TETRIS','BACK TO PC'})do
+  text('CHOOSE A GAME',12,19)
+  for i,label in ipairs({'SOLITAIRE','SNAKE','TETRIS','BLACKJACK','COLLAPSE','MAHJONG','BACK TO PC'})do
    g.setColor(i==self.index and 1 or .65,i==self.index and .88 or .8,i==self.index and .3 or .85,1)
-   text((i==self.index and '> 'or '  ')..label,16,40+(i-1)*17)
+   text((i==self.index and '> 'or '  ')..label,16,32+(i-1)*13)
   end
   g.setColor(.7,.8,.85,1);text('A PLAY   B BACK',6,self.h-10);g.pop();return
  end

@@ -10,6 +10,10 @@ RomText.lazy=function(t)return t end
 require('src.ui.game3.chrome').stdFrame=function()end
 require('src.ui.game3.frlg_font').draw=function()end
 require('src.ui.game3.frlg_font').drawGlyph=function()end
+love.graphics.getPixelDimensions=function()return 1280,960 end
+love.graphics.newCanvas=function()return {setFilter=function()end}end
+love.graphics.getCanvas=noop;love.graphics.setCanvas=noop;love.graphics.origin=noop
+love.graphics.setScissor=noop;love.graphics.setBlendMode=noop
 local checks=0
 local function ok(v,msg) assert(v,msg);checks=checks+1 end
 local function read(path) local f=io.open(root..'/'..path,'rb');if not f then return end;local b=f:read('*a');f:close();return b end
@@ -17,6 +21,7 @@ local function newGame()
  local g={data={},save={party={{species=1}},player={name='TEST'},engineFlags={}},input={pressed={}}}
  function g.input:wasPressed(k) return self.pressed[k] or false end
  g.stack={states={}};function g.stack:push(s) self.states[#self.states+1]=s end;function g.stack:pop() return table.remove(self.states) end;function g.stack:top() return self.states[#self.states] end
+ g.draw=function(self)self.nativeDraws=(self.nativeDraws or 0)+1 end
  return g
 end
 local hooks,events={},{}
@@ -31,9 +36,16 @@ local function tour(g,handle,draw)
  press('a');draw();press('b');press('a') -- Solitaire -> Games
  press('down');press('a');draw();press('b');press('down');press('down');press('a') -- Snake -> Games
  press('down');press('a');draw();press('b');press('down');press('down');press('a') -- Tetris -> Games
+ for _=4,6 do
+  press('down');press('a');draw();press('start');press('down');press('down');press('a')
+ end
  press('b')
 end
-local function exit(g,s)tour(g,function(input)s:handle(input)end,function()s:draw()end)end
+local function exit(g,s)
+ local before=g.nativeDraws or 0;g:draw();ok((g.nativeDraws or 0)==before,'integer presenter owns active PC games')
+ tour(g,function(input)s:handle(input)end,function()s:draw()end)
+ g:draw();ok(g.nativeDraws==before+1,'native renderer restored after Games')
+end
 for _,id in ipairs({'red','blue','yellow','gold','silver','crystal','firered','leafgreen','ruby','sapphire','emerald'}) do
  Version.set(id);local g=newGame();events['game.ready']({game=g})
  if Version.generation()==1 then
@@ -64,7 +76,7 @@ for _,id in ipairs({'red','blue','yellow','gold','silver','crystal','firered','l
   local PC=require('src.ui.game3.pc_menu');local Stack=require('src.ui.game3.stack');Stack.clear()
   local session={name='TEST',version=id,party={}}
   PC.show({session=session,startMode='select'});local rows=PC._rootEntries();ok(rows[#rows].id=='pc_solitaire','Gen3 row');ok(#PC._rootEntries()==#rows,'no duplicate')
-  PC.cursor=#rows;g.input.pressed={a=true};PC.handleInput(g.input);local layer=Stack.top();ok(layer.id=='pc_solitaire','Gen3 open');layer.mod.draw();layer.mod.update(.1)
+  PC.cursor=#rows;g.input.pressed={a=true};PC.handleInput(g.input);local layer=Stack.top();ok(layer.id=='pc_solitaire','Gen3 open');layer.mod.draw();layer.mod.update(.1);g:draw();ok(not g.nativeDraws,'Gen3 integer presenter')
   tour(g,layer.mod.handleInput,layer.mod.draw);ok(Stack.top().id=='pc_menu' and PC.open and PC.cursor==#rows,'Gen3 return')
   PC.close();PC.show({session=session,startMode='player_pc',bedroom=true})
   ok(Stack.top().id=='pc_menu' and Stack.depth()==1,'Gen3 bedroom native menu only')
