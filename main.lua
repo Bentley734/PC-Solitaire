@@ -6,12 +6,15 @@ end
 local Logic=include('solitaire_logic.lua')
 local Solitaire=include('solitaire_screen.lua')(mod,Logic)
 local More=include('more_screen.lua')(Solitaire,include('more_logic.lua'))
-local New=include('new_screen.lua')(Solitaire.text,include('mines_logic.lua'),include('pet_logic.lua'),include('pet_sprites.lua'),mod,include('pet_viewport.lua'))
+local TouchLayout=include('touch_layout.lua')
+local New=include('new_screen.lua')(Solitaire.text,include('mines_logic.lua'),include('pet_logic.lua'),include('pet_sprites.lua'),mod,include('pet_viewport.lua'),TouchLayout)
 local Screen=include('games_screen.lua')(Solitaire,include('arcade_logic.lua'),More,New)
 local Pixels=include('pixel_present.lua')
 local active,liveGame
+local Gear=include('kanto_gear.lua')(mod,Screen,Solitaire.text,function()return not active end,include('direct_touch.lua')(TouchLayout))
 local function open(game,gen3)
   if active then return end
+  Gear.close()
   if gen3 then
     local Stack=require('src.ui.game3.stack')
     local screen=Screen.new(game,240,160,function() Stack.pop('pc_solitaire');active=nil end)
@@ -52,6 +55,7 @@ mod.events:on('game.ready',function(ev)
   active=nil
   local game=ev.game
   liveGame=game
+  Gear.bind(game)
   local generation=require('src.core.GameVersion').generation()
   if type(game.draw)=='function' then
     patch(game,'draw',function(original) return function(self,...)
@@ -145,4 +149,5 @@ mod.events:on('game.ready',function(ev)
 end)
 mod.exports.openGames=function(game) open(game,require('src.core.GameVersion').generation()==3) end
 mod.exports.openSolitaire=mod.exports.openGames
+mod.exports.kantoGear=Gear
 end

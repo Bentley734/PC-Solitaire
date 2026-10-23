@@ -2,6 +2,7 @@ return function(Solitaire,Rules,More,New)
 local Games={};Games.__index=Games
 local colors={{0.1,0.9,0.95},{1,0.85,0.15},{0.7,0.35,1},{0.25,0.9,0.4},{1,0.3,0.35},{0.3,0.5,1},{1,0.6,0.2}}
 local text=Solitaire.text
+Games.withTextScale=Solitaire.withTextScale
 function Games.new(game,w,h,close)
  return setmetatable({game=game,w=w,h=h,close=close,index=1,isOpaque=true,isMenu=true,clock=0},Games)
 end
@@ -102,14 +103,14 @@ function Games:update(dt)self:handle(self.game.input);self:tick(dt)end
 function Games:draw()
  if self.child then return self.child:draw()end
  local g=love.graphics;g.push('all');g.setShader();if g.setLineStyle then g.setLineStyle('rough')end;g.setColor(.025,.07,.12,1);g.rectangle('fill',0,0,self.w,self.h)
- g.setColor(.7,1,.8,1);text(self.mode and self.mode:upper() or 'PC GAMES',6,5)
+ g.setColor(.7,1,.8,1);text(self.mode and self.mode:upper()or(self.touchMode and'CHOOSE A GAME'or'PC GAMES'),6,5)
  if not self.mode then
-  text('CHOOSE A GAME',12,19)
-  for i,label in ipairs({'SOLITAIRE','SNAKE','TETRIS','BLACKJACK','COLLAPSE','MINESWEEPER','POKEPET','BACK TO PC'})do
+  if not self.touchMode then text('CHOOSE A GAME',12,19)end
+  for i,label in ipairs({'SOLITAIRE','SNAKE','TETRIS','BLACKJACK','COLLAPSE','MINESWEEPER','POKEPET',self.exitLabel or 'BACK TO PC'})do
    g.setColor(i==self.index and 1 or .65,i==self.index and .88 or .8,i==self.index and .3 or .85,1)
-   text((i==self.index and '> 'or '  ')..label,16,30+(i-1)*12)
+   text((i==self.index and '> 'or '  ')..label,16,30+(i-1)*(self.touchMode and 20 or 12),self.touchMode and 2 or 1)
   end
-  g.setColor(.7,.8,.85,1);text('A PLAY   B BACK',6,self.h-10);g.pop();return
+  g.setColor(.7,.8,.85,1);text(self.touchMode and'TAP A GAME TO PLAY'or'A PLAY   B BACK',6,self.h-(self.touchMode and 12 or 10));g.pop();return
  end
  local s=self.state
  if self.mode=='snake' then
@@ -131,7 +132,7 @@ function Games:draw()
    end
    g.setColor(1,1,.6,1-t);text('10',math.floor(px-3),math.floor(py-cell-6-t*8))
   end
-  g.setColor(1,1,1,1);text('SCORE '..s.score,65,5);text('D PAD MOVE  B PAUSE',4,self.h-8)
+  g.setColor(1,1,1,1);text('SCORE '..s.score,65,5);text(self.touchMode and'PAD MOVE / MENU PAUSE'or'D PAD MOVE  B PAUSE',4,self.h-8)
  else
   local cell=math.floor((self.h-24)/20);local ox=math.floor((self.w-cell*10-56)/2);local oy=15
   local function block(x,y,id,ghost)
@@ -172,9 +173,9 @@ function Games:draw()
    for _,c in ipairs(Rules.cells(ghost))do block(c.x,c.y,p.id,true)end
    for _,c in ipairs(Rules.cells(p))do block(c.x,c.y,p.id)end
   end
-  local tx=ox+cell*10+7;g.setColor(1,1,1,1);text('SCORE',tx,19);text(s.score,tx,28);text('LINES '..s.lines,tx,42);text('LEVEL '..s.level,tx,54);text('NEXT',tx,70)
-  for _,c in ipairs(Rules.cells({id=s.next,x=1,y=1,rot=0}))do g.setColor(unpack(colors[s.next]));g.rectangle('fill',tx+(c.x-1)*5,82+(c.y-1)*5,4,4)end
-  g.setColor(1,1,1,1);text('A TURN',tx,104);text('UP DROP',tx,114);text('B PAUSE',tx,124)
+  local tx=ox+cell*10+7;g.setColor(1,1,1,1);text('SCORE',tx,19);text(s.score,tx,self.touchMode and 32 or 28);text('LINES '..s.lines,tx,self.touchMode and 48 or 42);text('LEVEL '..s.level,tx,self.touchMode and 62 or 54);text('NEXT',tx,self.touchMode and 80 or 70)
+  for _,c in ipairs(Rules.cells({id=s.next,x=1,y=1,rot=0}))do g.setColor(unpack(colors[s.next]));g.rectangle('fill',tx+(c.x-1)*5,(self.touchMode and 96 or 82)+(c.y-1)*5,4,4)end
+  g.setColor(1,1,1,1);text('A TURN',tx,self.touchMode and 126 or 104);text('UP DROP',tx,self.touchMode and 140 or 114);if not self.touchMode then text('B PAUSE',tx,124)end
  end
  if s.over and not self.clearFX then
   g.setColor(.02,.04,.08,.95);g.rectangle('fill',4,math.floor(self.h/2)-13,self.w-8,30)

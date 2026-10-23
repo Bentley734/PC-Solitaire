@@ -1,4 +1,4 @@
-return function(Text,Mines,Pet,Art,mod,View)
+return function(Text,Mines,Pet,Art,mod,View,Touch)
 local S={};S.__index=S
 function S.new(game,w,h,close,kind)
  local self=setmetatable({game=game,w=w,h=h,close=close,kind=kind,x=5,y=5,action=1,clock=0,saveClock=0,petMeshes={}},S)
@@ -92,7 +92,8 @@ function S:draw()
  local s=self.state
  if self.kind==1 then
   local cell=math.floor(math.min((self.w-12)/9,(self.h-42)/9));local ox=math.floor((self.w-9*cell)/2);local oy=26
-  g.setColor(1,1,1,1);Text('FLAGS '..s.flags..'/10',6,16);Text('TIME '..math.min(999,math.floor(s.time)),self.w-38,16)
+  if self.touchMode then local r=Touch.mines(self.w,self.h);cell,ox,oy=r.cell,r.x,r.y end
+  g.setColor(1,1,1,1);Text('FLAGS '..s.flags..'/10',6,self.touchMode and 18 or 16);Text('TIME '..math.min(999,math.floor(s.time)),self.w-(self.touchMode and 80 or 38),self.touchMode and 18 or 16)
   local colors={{.25,.6,1},{.25,1,.4},{1,.35,.3},{.75,.5,1},{1,.7,.2},{.2,1,1},{1,.5,.8},{1,1,1}}
   for y=1,9 do for x=1,9 do
    local c=s.cells[y][x];local px,py=ox+(x-1)*cell,oy+(y-1)*cell
@@ -106,12 +107,13 @@ function S:draw()
   end end
   g.setColor(1,.9,.25,1);g.rectangle('line',ox+(self.x-1)*cell-1,oy+(self.y-1)*cell-1,cell+1,cell+1)
   if s.over then g.setColor(1,.9,.4,1);Text(s.won and 'CLEARED  A NEW GAME'or 'BOOM  A NEW GAME',6,self.h-16)
-  else g.setColor(.7,.85,.9,1);Text('A DIG  SELECT FLAG',6,self.h-16)end
-  Text('B/START MENU',6,self.h-8)
+  else g.setColor(.7,.85,.9,1);Text(self.touchMode and'TAP DIG / HOLD FLAG'or'A DIG  SELECT FLAG',6,self.h-16)end
+  if not self.touchMode then Text('B/START MENU',6,self.h-8)end
  else
   if s then
-   g.setColor(1,1,.8,1);Text(self.art:name(s.species):sub(1,32),6,16)
+   g.setColor(1,1,.8,1);Text(self.art:name(s.species):sub(1,self.touchMode and 28 or 32),6,self.touchMode and 18 or 16)
    local box=View.box(self.w)
+   if self.touchMode then box={x=box.x,y=34,w=box.w,h=64}end
    g.setColor(.035,.10,.16,1);g.rectangle('fill',box.x,box.y,box.w,box.h)
    g.setColor(.12,.23,.3,1);g.rectangle('line',box.x,box.y,box.w-1,box.h-1)
    if self.image then
@@ -120,26 +122,29 @@ function S:draw()
    else g.setColor(.7,.85,.9,1);Text('LOADING',box.x+math.floor((box.w-28)/2),54)end
    local x=math.floor(self.w*.57)
    for i,key in ipairs({'food','happy','energy','clean'})do
-    local y=30+(i-1)*14;g.setColor(.8,.9,1,1);Text(key:upper()..' '..math.floor(s[key]),x,y)
-    g.setColor(.16,.25,.3,1);g.rectangle('fill',x,y+7,self.w-x-8,3)
-    g.setColor(s[key]<25 and 1 or .3,s[key]<25 and .4 or .9,.5,1);g.rectangle('fill',x,y+7,math.floor((self.w-x-8)*s[key]/100),3)
+    local y=(self.touchMode and 34 or 30)+(i-1)*(self.touchMode and 16 or 14);local bar=self.touchMode and 11 or 7
+    g.setColor(.8,.9,1,1);Text(key:upper()..' '..math.floor(s[key]),x,y)
+    g.setColor(.16,.25,.3,1);g.rectangle('fill',x,y+bar,self.w-x-8,3)
+    g.setColor(s[key]<25 and 1 or .3,s[key]<25 and .4 or .9,.5,1);g.rectangle('fill',x,y+bar,math.floor((self.w-x-8)*s[key]/100),3)
    end
    g.setColor(1,.8,.4,1)
-   if s.sleeping then Text('Z Z Z',x,87)
-   elseif self.fx then
+   if s.sleeping and not self.touchMode then Text('Z Z Z',x,87)
+   elseif self.fx and not self.touchMode then
     Text(self.action==1 and 'YUM'or self.action==4 and 'CLEAN'or 'LOVE',x,87)
    end
-   g.setColor(.8,.9,1,1);Text('AGE '..math.floor(s.age/60)..'M  BOND '..s.bond,6,96)
-   Text(self.fx and self.message or s.sleeping and 'RESTING' or 'HOW ABOUT SOME CARE?',6,105)
+   g.setColor(.8,.9,1,1);Text('AGE '..math.floor(s.age/60)..'M  BOND '..s.bond,6,self.touchMode and 104 or 96)
+   Text(self.fx and self.message or s.sleeping and 'RESTING' or 'HOW ABOUT SOME CARE?',6,self.touchMode and 118 or 105)
    for i,label in ipairs({'FEED','PLAY',s.sleeping and 'WAKE'or 'REST','CLEAN'})do
     g.setColor(i==self.action and 1 or .65,i==self.action and .9 or .8,i==self.action and .3 or .85,1)
-    Text((i==self.action and '> 'or '  ')..label,8+((i-1)%2)*math.floor(self.w/2),115+math.floor((i-1)/2)*10)
+    if self.touchMode then
+     local r=Touch.care(i);g.setColor(.08,.2,.26,1);g.rectangle('fill',r.x,r.y,r.w,r.h);g.setColor(.9,1,.9,1);Text(label,r.x+10,r.y+7,2)
+    else Text((i==self.action and '> 'or '  ')..label,8+((i-1)%2)*math.floor(self.w/2),115+math.floor((i-1)/2)*10)end
    end
-   g.setColor(.7,.85,.9,1);Text(self.saved==false and 'SAVE FAILED - SESSION ONLY'or 'A CARE  B MENU',6,self.h-8)
+   g.setColor(.7,.85,.9,1);Text(self.saved==false and'SAVE FAILED - SESSION ONLY'or(self.touchMode and'TAP CARE / MENU ABOVE'or'A CARE  B MENU'),6,self.h-(self.touchMode and 12 or 8))
   else g.setColor(1,1,1,1);Text('NO POKEMON ART AVAILABLE',6,45);Text('B MENU',6,60)end
  end
  if self.pause then panel(g,Text,self.w,self.h,{'RESUME',self.kind==1 and 'NEW GAME'or 'NEW PET','BACK TO GAMES'},self.menu,'PAUSED')end
- if self.confirm then panel(g,Text,self.w,self.h,{'A ADOPT NEW PET','B KEEP THIS PET'},0,'REPLACE CURRENT PET?')end
+ if self.confirm then panel(g,Text,self.w,self.h,self.touchMode and{'ADOPT NEW PET','KEEP THIS PET'}or{'A ADOPT NEW PET','B KEEP THIS PET'},0,'REPLACE CURRENT PET?')end
  g.pop()
 end
 return S

@@ -61,21 +61,21 @@ end
 function Screen:update(dt)self:handle(self.game.input);self:tick(dt)end
 function Screen:draw()
  local g=love.graphics;g.push('all');g.setShader();if g.setLineStyle then g.setLineStyle('rough')end;g.setColor(.035,.13,.13,1);g.rectangle('fill',0,0,self.w,self.h)
- local s=self.state;g.setColor(.9,1,.8,1);text(names[self.kind],4,4);text('SCORE '..s.score,self.w-64,4)
+ local s=self.state;g.setColor(.9,1,.8,1);text(names[self.kind],4,4);text('SCORE '..s.score,self.w-(self.touchMode and 112 or 64),4)
  if self.kind==1 then
   local cw,ch=self.w==160 and 16 or 32,self.w==160 and 24 or 48
   local function hand(cards,y,hide)
    local gap=math.min(cw+3,math.floor((self.w-12-cw)/math.max(1,#cards-1)))
    for i,c in ipairs(cards)do local face={rank=c.rank,suit=c.suit,up=not(hide and i==2)};self.renderer:card(face,6+(i-1)*gap,y,cw,ch)end
   end
-  local dy=22;local py=self.w==160 and 68 or 80
-  g.setColor(1,1,1,1);text('DEALER '..(s.phase=='done'and R.total(s.dealer)or '?'),6,14);hand(s.dealer,dy,s.phase~='done')
-  g.setColor(1,1,1,1);text('YOU '..R.total(s.player),6,py-9);hand(s.player,py,false)
+  local dy=self.touchMode and 34 or 22;local py=self.touchMode and 100 or self.w==160 and 68 or 80
+  g.setColor(1,1,1,1);text('DEALER '..(s.phase=='done'and R.total(s.dealer)or '?'),6,self.touchMode and 20 or 14);hand(s.dealer,dy,s.phase~='done')
+  g.setColor(1,1,1,1);text('YOU '..R.total(s.player),6,py-(self.touchMode and 14 or 9));hand(s.player,py,false)
   g.setColor(1,1,.6,1)
-  if s.phase=='done'then text(s.result,6,self.h-25);text('A NEXT HAND  B MENU',6,self.h-10)
+  if s.phase=='done'then text(s.result,6,self.h-25);text(self.touchMode and'TAP FOR NEXT HAND'or'A NEXT HAND  B MENU',6,self.h-10)
   else
-   for i,label in ipairs({'HIT','STAND','DOUBLE'})do text((i==self.index and '> 'or '  ')..label,4+(i-1)*math.floor(self.w/3),self.h-25)end
-   g.setColor(.7,.9,.8,1);text(self.status~=''and self.status or 'A CHOOSE  B PAUSE',4,self.h-10)
+   for i,label in ipairs({'HIT','STAND','DOUBLE'})do text((i==self.index and '> 'or '  ')..label,4+(i-1)*math.floor(self.w/3),self.h-25,self.touchMode and 2 or 1)end
+   g.setColor(.7,.9,.8,1);text(self.status~=''and self.status or(self.touchMode and'TAP ACTION / MENU ABOVE'or'A CHOOSE  B PAUSE'),4,self.h-10)
   end
   if self.fx then g.setColor(1,1,.5,1-self.fx.time/.25);g.rectangle('line',4,py-2,self.w-8,ch+4)end
  elseif self.kind==2 then
@@ -88,7 +88,7 @@ function Screen:draw()
   if self.fx then local t=self.fx.time/.25;for _,p in ipairs(self.fx.cells)do g.setColor(1,1,.6,1-t);local size=math.floor(cell*(1+t));g.rectangle('line',math.floor(ox+(p.x-.5)*cell-size/2),math.floor(oy+(p.y-.5)*cell-size/2),size,size)end end
   g.setColor(1,1,.3,1);g.rectangle('line',ox+(self.x-1)*cell-1,oy+(self.y-1)*cell-1,cell+1,cell+1)
   local interval=math.max(3,8-math.floor(s.score/500)*.4);g.setColor(.9,.5,.2,1);g.rectangle('fill',ox,oy+cell*12+2,math.floor(cell*10*self.time/interval),2)
-  g.setColor(1,1,1,1);text(self.status~=''and self.status or 'A CLEAR GROUP  B PAUSE',4,self.h-10)
+  g.setColor(1,1,1,1);text(self.status~=''and self.status or(self.touchMode and'TAP GROUP / TAP HERE RISE'or'A CLEAR GROUP  B PAUSE'),4,self.h-10)
  end
  if s.over then
   g.setColor(.02,.1,.1,.95);g.rectangle('fill',4,math.floor(self.h/2)-13,self.w-8,29);g.setColor(1,1,.5,1)

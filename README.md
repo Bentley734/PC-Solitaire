@@ -1,8 +1,28 @@
-# PC Games 1.4.1
+# PC Games 1.5.0
 
 Solitaire, Snake, Tetris, Blackjack, Collapse, Minesweeper and PokePet in a **GAMES** submenu on every in-game PC. Supports Red, Blue, Yellow, Gold, Silver, Crystal, FireRed, LeafGreen, Ruby, Sapphire and Emerald with Mod API v2 (Gen1Recomp >=0.3.54 <0.4.0).
 
 Install: extract `pc_solitaire` into `mods`, replacing the previous folder, enable **PC Games**, and restart the game. The folder, internal mod ID and GitHub repository remain unchanged so this upgrades PC Solitaire. Choose **GAMES** at any PC, including bedroom PCs. In Gen 3 player/bedroom PCs, GAMES is part of the native options list immediately before Turn Off; there is no extra Player PC / Games chooser.
+
+## Kanto Gear / Silph Store
+
+With Kanto Gear enabled, install **PC GAMES** in its Silph Store and place the
+single app tile on Home. PokePet is selected inside PC Games, alongside the
+other six games. Pokemon keeps running above with its normal physical controls.
+
+Only Snake and Tetris have touch control pads. Solitaire cards, Blackjack
+actions, Collapse groups, Minesweeper cells and PokePet care use direct taps.
+Tappable labels are larger; titles, scores, stats and Solitaire's informational
+text retain their original size to keep the layout clear.
+Hold a Minesweeper cell for 0.45 seconds to flag it. Tap MENU and its entries
+to pause, restart or return; X CLOSE returns the display to Gear. PokePet uses
+the same per-playthrough save as the PC version.
+
+Tested with Kanto Gear 4.4.1's public modules API 1. Supports an in-window lower
+screen and native secondary-display output, with fallback if a display is lost.
+Phone streaming and handheld-target modes use the in-window lower panel while
+the app is open. The ordinary PC menus still work without Gear installed.
+See [Kanto Gear setup and validation](docs/KANTO-GEAR.md).
 
 ## Menu and return
 

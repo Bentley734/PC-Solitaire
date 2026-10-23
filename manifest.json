@@ -1,7 +1,7 @@
 {
   "id": "pc_solitaire",
   "name": "PC Games",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "api": 2,
   "main": "main.lua",
   "entry": "main.lua",
@@ -24,5 +24,8 @@
     "engine_internals"
   ],
   "github": "Bentley734/PC-Solitaire",
-  "description": "Seven PC games including Minesweeper and a persistent Pokemon pet using your active sprites, across all eleven games."
+  "description": "Seven PC games and a persistent Pokemon pet across eleven games, with an optional touch-controlled PC Games app in Kanto Gear’s Silph Store.",
+  "optional_dependencies": [
+    "kanto_gear"
+  ]
 }
