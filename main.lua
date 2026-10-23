@@ -6,7 +6,7 @@ end
 local Logic=include('solitaire_logic.lua')
 local Solitaire=include('solitaire_screen.lua')(mod,Logic)
 local More=include('more_screen.lua')(Solitaire,include('more_logic.lua'))
-local New=include('new_screen.lua')(Solitaire.text,include('mines_logic.lua'),include('pet_logic.lua'),include('pet_sprites.lua'),mod)
+local New=include('new_screen.lua')(Solitaire.text,include('mines_logic.lua'),include('pet_logic.lua'),include('pet_sprites.lua'),mod,include('pet_viewport.lua'))
 local Screen=include('games_screen.lua')(Solitaire,include('arcade_logic.lua'),More,New)
 local Pixels=include('pixel_present.lua')
 local active,liveGame

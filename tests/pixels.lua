@@ -3,7 +3,7 @@ local function integer(v)assert(type(v)=='number'and v%1==0,'fractional pixel ge
 local function noop()end
 local draws,frames=0,0
 local scales={}
-local g={push=noop,pop=noop,setShader=noop,setColor=noop,setLineStyle=noop}
+local g={push=noop,pop=noop,setShader=noop,setColor=noop,setLineStyle=noop,setScissor=noop}
 function g.rectangle(_,x,y,w,h)integer(x);integer(y);integer(w);integer(h)end
 function g.scale(x,y)integer(x);integer(y);assert(x>=1 and y>=1,'fractional sprite scale')end
 function g.newQuad(x,y,w,h,iw,ih)integer(x);integer(y);integer(w);integer(h);return {quad=true}end
@@ -21,7 +21,7 @@ local S=assert(load(read('solitaire_screen.lua')))()({read=function()return 'fix
 local Extra=assert(load(read('more_screen.lua')))()(S,L)
 local petImage={getWidth=function()return 64 end,getHeight=function()return 64 end,setFilter=noop}
 local Art={new=function()return {valid={PIKACHU='PIKACHU'},choose=function()return 'PIKACHU'end,name=function()return 'PIKACHU'end,picture=function()return petImage end}end}
-local New=dofile(root..'/new_screen.lua')(S.text,dofile(root..'/mines_logic.lua'),dofile(root..'/pet_logic.lua'),Art,{})
+local New=dofile(root..'/new_screen.lua')(S.text,dofile(root..'/mines_logic.lua'),dofile(root..'/pet_logic.lua'),Art,{},dofile(root..'/pet_viewport.lua'))
 local G=assert(load(read('games_screen.lua')))()(S,R,Extra,New)
 local game={input={wasPressed=function()return false end}}
 for _,size in ipairs({{160,144},{240,160}})do

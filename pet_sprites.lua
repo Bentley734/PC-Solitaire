@@ -30,6 +30,10 @@ function Art.new(game)
  table.sort(self.pool,function(a,b)return tostring(a)<tostring(b)end)
  function self:choose()if #self.pool>0 then return self.pool[math.random(#self.pool)]end end
  function self:name(id)return self.valid[id]or 'POKEMON'end
+ function self:cry(id)
+  if gen==3 then return require('src.core.game3.audio').playCry(id)end
+  return require('src.core.Sound').playCry(game.data,id)
+ end
  return self
 end
 return Art

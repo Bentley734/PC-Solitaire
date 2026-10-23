@@ -31,7 +31,7 @@ function P.care(s,action)
  elseif action==4 then s.clean=100;s.happy=math.min(100,s.happy+5)
  else return nil end
  s.bond=math.min(9999,s.bond+1)
- return ({'YUMMY','THAT WAS FUN',false,'ALL CLEAN'})[action]
+ return ({'YUMMY','THAT WAS FUN',false,'ALL CLEAN'})[action],true
 end
 function P.snapshot(s)
  local out={version=1,species=s.species,age=s.age,bond=s.bond,sleeping=s.sleeping}

@@ -42,7 +42,8 @@ ok(not P.restore(snap,function()return false end),'removed species rejected');sn
 -- Child controls, pause and durable care state through the real screen factory.
 local stored;local writes=0
 local mod={storage={read=function()return stored end,write=function(_,_,_,value)stored=value;writes=writes+1;return true end}}
-local Art={new=function()return {valid={PIKACHU='PIKACHU'},choose=function()return 'PIKACHU'end,picture=function()end}end}
+local cries=0
+local Art={new=function()return {valid={PIKACHU='PIKACHU'},choose=function()return 'PIKACHU'end,picture=function()end,cry=function(_,id)ok(id=='PIKACHU','cry for adopted species');cries=cries+1 end}end}
 local S=dofile(root..'/new_screen.lua')(function()end,M,P,Art,mod)
 local input={};function input:wasPressed(k)return self.key==k end
 local closed=0;local screen=S.new({},160,144,function()closed=closed+1 end,1)
@@ -52,7 +53,7 @@ press('b');screen:tick(20);ok(screen.state.time==2,'mines paused');press('down')
 press('start');press('down');press('down');press('a');ok(closed==1,'mines return')
 screen=S.new({},160,144,function()closed=closed+1 end,2);ok(stored.species=='PIKACHU','random species saved on adoption')
 press('a');ok(stored.food==100 and stored.bond==1,'care saved immediately');screen:tick(2);press('right');press('a');ok(stored.bond==2,'navigate play')
-screen:tick(16);ok(writes>=4 and stored.age>=18,'periodic progress save')
+screen:tick(16);ok(writes>=4 and stored.age>=18,'periodic progress save');ok(cries==2,'successful feed and play cry once each')
 press('b');local age=screen.state.age;screen:tick(30);ok(screen.state.age==age,'pet paused')
 press('down');press('a');ok(screen.confirm,'new pet requires confirmation');press('b');ok(not screen.confirm and screen.state.bond==2,'keep pet')
 press('down');press('a');ok(closed==2,'pet return')
@@ -60,4 +61,10 @@ screen=S.new({},240,160,function()end,2);ok(screen.state.bond==2 and screen.stat
 press('b');press('down');press('a');press('a');ok(screen.state.bond==0 and stored.bond==0 and not screen.pause,'confirmed new adoption')
 local NoStorage=dofile(root..'/new_screen.lua')(function()end,M,P,Art,{})
 ok(NoStorage.new({},160,144,function()end,2).saved==false,'save failure visible')
+local before=cries
+screen.state.food=100;screen.action=1;press('a');ok(cries==before,'full pet does not cry for rejected feeding')
+screen:tick(2);screen.state.energy=0;screen.action=2;press('a');ok(cries==before,'tired pet does not cry for rejected play')
+screen:tick(2);screen.state.sleeping=true;screen.action=1;press('a');ok(cries==before,'sleeping pet does not cry for rejected feeding')
+screen:tick(2);screen.action=3;press('a');screen:tick(2);screen.action=4;press('a');ok(cries==before,'wake and clean stay quiet')
+screen:tick(2);screen.action=1;screen.state.food=40;screen.art.cry=function()error('audio unavailable')end;press('a');ok(screen.state.food==65,'audio failure does not interrupt care')
 print('Minesweeper and pet assertions: '..n)

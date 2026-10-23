@@ -3,7 +3,7 @@ import sys,json
 from lupa.luajit21 import LuaRuntime
 root=Path(__file__).resolve().parents[1]
 engine=Path(sys.argv[1]).resolve()
-for test in ['rules.lua','controls.lua','arcade.lua','effects.lua','more.lua','new_games.lua','pet_sprites.lua','pet_storage.lua','pixels.lua','integration.lua']:
+for test in ['rules.lua','controls.lua','arcade.lua','effects.lua','more.lua','new_games.lua','pet_sprites.lua','pet_storage.lua','pet_viewport.lua','pixels.lua','integration.lua']:
     lua=LuaRuntime(unpack_returned_tuples=True)
     lua.globals().arg=lua.table_from([str(root),str(engine)])
     lua.execute((root/'tests'/test).read_text())

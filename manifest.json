@@ -1,7 +1,7 @@
 {
   "id": "pc_solitaire",
   "name": "PC Games",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "api": 2,
   "main": "main.lua",
   "entry": "main.lua",

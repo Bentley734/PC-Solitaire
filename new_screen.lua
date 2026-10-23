@@ -1,7 +1,7 @@
-return function(Text,Mines,Pet,Art,mod)
+return function(Text,Mines,Pet,Art,mod,View)
 local S={};S.__index=S
 function S.new(game,w,h,close,kind)
- local self=setmetatable({game=game,w=w,h=h,close=close,kind=kind,x=5,y=5,action=1,clock=0,saveClock=0},S)
+ local self=setmetatable({game=game,w=w,h=h,close=close,kind=kind,x=5,y=5,action=1,clock=0,saveClock=0,petMeshes={}},S)
  if kind==1 then self.state=Mines.new()
  else
   local ok,art=pcall(Art.new,game)
@@ -72,7 +72,11 @@ function S:handle(input)
   if pressed('left')or pressed('right')then self.action=self.action%2==1 and self.action+1 or self.action-1
   elseif pressed('up')or pressed('down')then self.action=(self.action+1)%4+1
   elseif pressed('select')then self.pause=true;self.menu=1;self:save()
-  elseif pressed('a')and not self.fx then self.message=Pet.care(self.state,self.action);self.fx=1.2;self:save()end
+  elseif pressed('a')and not self.fx then
+   local cared;self.message,cared=Pet.care(self.state,self.action)
+   if cared and (self.action==1 or self.action==2)and self.art.cry then pcall(self.art.cry,self.art,self.state.species)end
+   self.fx=1.2;self:save()
+  end
  end
 end
 local function panel(g,text,w,h,labels,index,title)
@@ -107,13 +111,13 @@ function S:draw()
  else
   if s then
    g.setColor(1,1,.8,1);Text(self.art:name(s.species):sub(1,32),6,16)
-   local center=math.floor(self.w*.29);local base=92
-   g.setColor(.12,.23,.3,1);g.rectangle('fill',center-35,base-5,70,3)
+   local box=View.box(self.w)
+   g.setColor(.035,.10,.16,1);g.rectangle('fill',box.x,box.y,box.w,box.h)
+   g.setColor(.12,.23,.3,1);g.rectangle('line',box.x,box.y,box.w-1,box.h-1)
    if self.image then
-    local iw,ih=self.image:getWidth(),self.image:getHeight()
-    local bounce=not s.sleeping and self.fx and math.floor(math.sin(self.clock*16)*2)or 0
-    g.setColor(1,1,1,1);g.draw(self.image,center-math.floor(iw/2),base-ih+bounce,0,1,1)
-   else g.setColor(.7,.85,.9,1);Text('LOADING',center-14,54)end
+    local bounce=not s.sleeping and self.fx and math.floor(math.sin(self.clock*16))or 0
+    View.draw(self.image,box,bounce,self.petMeshes)
+   else g.setColor(.7,.85,.9,1);Text('LOADING',box.x+math.floor((box.w-28)/2),54)end
    local x=math.floor(self.w*.57)
    for i,key in ipairs({'food','happy','energy','clean'})do
     local y=30+(i-1)*14;g.setColor(.8,.9,1,1);Text(key:upper()..' '..math.floor(s[key]),x,y)
@@ -121,9 +125,9 @@ function S:draw()
     g.setColor(s[key]<25 and 1 or .3,s[key]<25 and .4 or .9,.5,1);g.rectangle('fill',x,y+7,math.floor((self.w-x-8)*s[key]/100),3)
    end
    g.setColor(1,.8,.4,1)
-   if s.sleeping then Text('Z Z Z',center+17,30)
+   if s.sleeping then Text('Z Z Z',x,87)
    elseif self.fx then
-    local y=math.floor(27-(1.2-self.fx)*6);Text(self.action==1 and 'YUM'or self.action==4 and 'CLEAN'or 'LOVE',center-7,y)
+    Text(self.action==1 and 'YUM'or self.action==4 and 'CLEAN'or 'LOVE',x,87)
    end
    g.setColor(.8,.9,1,1);Text('AGE '..math.floor(s.age/60)..'M  BOND '..s.bond,6,96)
    Text(self.fx and self.message or s.sleeping and 'RESTING' or 'HOW ABOUT SOME CARE?',6,105)
