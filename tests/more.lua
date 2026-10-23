@@ -46,5 +46,5 @@ for index=4,5 do
  press('start');local clock=child.clock;host:tick(20);ok(child.clock==clock,'pause freezes extra games')
  press('down');press('down');press('a');ok(not host.child and not host.mode and host.index==index,'extra submenu return')
 end
-host.index=6;press('a');ok(closed==1,'back pc new index')
+host.index=8;press('a');ok(closed==1,'back pc new index')
 print('Additional game assertions: '..n)

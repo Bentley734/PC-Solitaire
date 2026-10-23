@@ -18,14 +18,16 @@ local checks=0
 local function ok(v,msg) assert(v,msg);checks=checks+1 end
 local function read(path) local f=io.open(root..'/'..path,'rb');if not f then return end;local b=f:read('*a');f:close();return b end
 local function newGame()
- local g={data={},save={party={{species=1}},player={name='TEST'},engineFlags={}},input={pressed={}}}
+ local g={data={pokemon={PIKACHU={name='PIKACHU',spriteFront='fixture.png'}}},save={party={{species=1}},player={name='TEST'},engineFlags={}},input={pressed={}}}
  function g.input:wasPressed(k) return self.pressed[k] or false end
  g.stack={states={}};function g.stack:push(s) self.states[#self.states+1]=s end;function g.stack:pop() return table.remove(self.states) end;function g.stack:top() return self.states[#self.states] end
  g.draw=function(self)self.nativeDraws=(self.nativeDraws or 0)+1 end
  return g
 end
 local hooks,events={},{}
-local mod={read=function(_,path)return read(path)end,hooks={wrap=function(_,name,fn)hooks[name]=fn end},events={on=function(_,name,fn)events[name]=fn end},exports={}}
+local pets={}
+local mod={read=function(_,path)return read(path)end,hooks={wrap=function(_,name,fn)hooks[name]=fn end},events={on=function(_,name,fn)events[name]=fn end},exports={},
+ storage={read=function(_,game)return pets[game]end,write=function(_,game,_,value)pets[game]=value;return true end}}
 assert(load(read('main.lua')))()(mod)
 -- Wire the public hook into the native constructors without a full loader boot.
 local oldCall=Runtime.call
@@ -36,9 +38,10 @@ local function tour(g,handle,draw)
  press('a');draw();press('b');press('a') -- Solitaire -> Games
  press('down');press('a');draw();press('b');press('down');press('down');press('a') -- Snake -> Games
  press('down');press('a');draw();press('b');press('down');press('down');press('a') -- Tetris -> Games
- for _=4,5 do
+ for _=4,7 do
   press('down');press('a');draw();press('start');press('down');press('down');press('a')
  end
+ ok(pets[g]and pets[g].species,'pet adopted and saved through every native PC path')
  press('b')
 end
 local function exit(g,s)
@@ -73,6 +76,8 @@ for _,id in ipairs({'red','blue','yellow','gold','silver','crystal','firered','l
    ok(found,'Gen2 direct PC row');c.index=found;g.stack:push(c);c:choose();s=g.stack:top();ok(s~=c,'Gen2 direct open');exit(g,s);ok(g.stack:top()==c,'Gen2 direct return')
   end
  else
+  local Pokemon=require('src.core.game3.pokemon')
+  Pokemon._names={[25]='PIKACHU'};Pokemon._national={toNational={[25]=25}}
   local PC=require('src.ui.game3.pc_menu');local Stack=require('src.ui.game3.stack');Stack.clear()
   local session={name='TEST',version=id,party={}}
   PC.show({session=session,startMode='select'});local rows=PC._rootEntries();ok(rows[#rows-1].id=='pc_solitaire' and rows[#rows].id=='quit','Games directly before Log Off');ok(#PC._rootEntries()==#rows,'no duplicate')

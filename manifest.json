@@ -1,7 +1,7 @@
 {
   "id": "pc_solitaire",
   "name": "PC Games",
-  "version": "1.3.3",
+  "version": "1.4.0",
   "api": 2,
   "main": "main.lua",
   "entry": "main.lua",
@@ -24,5 +24,5 @@
     "engine_internals"
   ],
   "github": "Bentley734/PC-Solitaire",
-  "description": "Five PC games: Solitaire, Snake, Tetris, Blackjack and Collapse across all eleven games."
+  "description": "Seven PC games including Minesweeper and a persistent Pokemon pet using your active sprites, across all eleven games."
 }

@@ -19,11 +19,14 @@ love={graphics=g,filesystem={newFileData=function(bytes)return bytes end}}
 local R=dofile(root..'/arcade_logic.lua');local L=dofile(root..'/more_logic.lua')
 local S=assert(load(read('solitaire_screen.lua')))()({read=function()return 'fixture'end},dofile(root..'/solitaire_logic.lua'))
 local Extra=assert(load(read('more_screen.lua')))()(S,L)
-local G=assert(load(read('games_screen.lua')))()(S,R,Extra)
+local petImage={getWidth=function()return 64 end,getHeight=function()return 64 end,setFilter=noop}
+local Art={new=function()return {valid={PIKACHU='PIKACHU'},choose=function()return 'PIKACHU'end,name=function()return 'PIKACHU'end,picture=function()return petImage end}end}
+local New=dofile(root..'/new_screen.lua')(S.text,dofile(root..'/mines_logic.lua'),dofile(root..'/pet_logic.lua'),Art,{})
+local G=assert(load(read('games_screen.lua')))()(S,R,Extra,New)
 local game={input={wasPressed=function()return false end}}
 for _,size in ipairs({{160,144},{240,160}})do
  local host=G.new(game,size[1],size[2],noop);host:draw();frames=frames+1
- for i=1,5 do
+ for i=1,7 do
   host:launch(i)
   if i==1 then host.child:act()
   elseif i==2 then local h=host.state.body[1];host.state.food={x=h.x+1,y=h.y};host:tick(.18)

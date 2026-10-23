@@ -1,4 +1,4 @@
-return function(Solitaire,Rules,More)
+return function(Solitaire,Rules,More,New)
 local Games={};Games.__index=Games
 local colors={{0.1,0.9,0.95},{1,0.85,0.15},{0.7,0.35,1},{0.25,0.9,0.4},{1,0.3,0.35},{0.3,0.5,1},{1,0.6,0.2}}
 local text=Solitaire.text
@@ -12,9 +12,12 @@ function Games:launch(index)
   self.child.exitLabel='QUIT TO GAMES';self.mode='solitaire'
  elseif index==2 then self.mode='snake';self.state=Rules.snake()
  elseif index==3 then self.mode='tetris';self.state=Rules.tetris()
- else
+ elseif index<=5 then
   assert(More,'Extra game screens unavailable')
   self.child=More.new(self.game,self.w,self.h,function()self.child=nil;self.mode=nil end,index-3);self.mode=({'blackjack','collapse'})[index-3]
+ else
+  self.child=New.new(self.game,self.w,self.h,function()self.child=nil;self.mode=nil end,index-5)
+  self.mode=index==6 and 'minesweeper'or 'pokepet'
  end
 end
 function Games:tick(dt)
@@ -64,9 +67,9 @@ function Games:handle(input)
  if self.closed then return end
  if self.child then self.child:handle(input);return end
  if not self.mode then
-  if input:wasPressed('up')then self.index=(self.index-2)%6+1
-  elseif input:wasPressed('down')then self.index=self.index%6+1
-  elseif input:wasPressed('b')or (input:wasPressed('a')and self.index==6)then self.closed=true;self.close()
+  if input:wasPressed('up')then self.index=(self.index-2)%8+1
+  elseif input:wasPressed('down')then self.index=self.index%8+1
+  elseif input:wasPressed('b')or (input:wasPressed('a')and self.index==8)then self.closed=true;self.close()
   elseif input:wasPressed('a')then self:launch(self.index)end
   return
  end
@@ -102,9 +105,9 @@ function Games:draw()
  g.setColor(.7,1,.8,1);text(self.mode and self.mode:upper() or 'PC GAMES',6,5)
  if not self.mode then
   text('CHOOSE A GAME',12,19)
-  for i,label in ipairs({'SOLITAIRE','SNAKE','TETRIS','BLACKJACK','COLLAPSE','BACK TO PC'})do
+  for i,label in ipairs({'SOLITAIRE','SNAKE','TETRIS','BLACKJACK','COLLAPSE','MINESWEEPER','POKEPET','BACK TO PC'})do
    g.setColor(i==self.index and 1 or .65,i==self.index and .88 or .8,i==self.index and .3 or .85,1)
-   text((i==self.index and '> 'or '  ')..label,16,32+(i-1)*13)
+   text((i==self.index and '> 'or '  ')..label,16,30+(i-1)*12)
   end
   g.setColor(.7,.8,.85,1);text('A PLAY   B BACK',6,self.h-10);g.pop();return
  end

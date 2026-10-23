@@ -1,12 +1,12 @@
-# PC Games 1.3.3
+# PC Games 1.4.0
 
-Solitaire, Snake, Tetris, Blackjack and Collapse in a **GAMES** submenu on every in-game PC. Supports Red, Blue, Yellow, Gold, Silver, Crystal, FireRed, LeafGreen, Ruby, Sapphire and Emerald with Mod API v2 (Gen1Recomp >=0.3.54 <0.4.0).
+Solitaire, Snake, Tetris, Blackjack, Collapse, Minesweeper and PokePet in a **GAMES** submenu on every in-game PC. Supports Red, Blue, Yellow, Gold, Silver, Crystal, FireRed, LeafGreen, Ruby, Sapphire and Emerald with Mod API v2 (Gen1Recomp >=0.3.54 <0.4.0).
 
 Install: extract `pc_solitaire` into `mods`, replacing the previous folder, enable **PC Games**, and restart the game. The folder, internal mod ID and GitHub repository remain unchanged so this upgrades PC Solitaire. Choose **GAMES** at any PC, including bedroom PCs. In Gen 3 player/bedroom PCs, GAMES is part of the native options list immediately before Turn Off; there is no extra Player PC / Games chooser.
 
 ## Menu and return
 
-Up/down chooses one of five games or Back to PC. A opens the highlighted game; B returns to the PC. Each game has a pause menu that returns to Games. The PC session and submenu selection stay in place. All game progress is temporary; Pokemon save data is untouched.
+Up/down chooses one of seven games or Back to PC. A opens the highlighted game; B returns to the PC. Each game has a pause menu that returns to Games. The PC session and submenu selection stay in place. Arcade progress is temporary; PokePet saves separately through the mod storage API for each playthrough. Playing the games does not change your party, inventory or money.
 
 ## Solitaire
 
@@ -42,6 +42,18 @@ A 52-card deck is shuffled for each hand. Choose Hit, Stand or Double with the D
 
 An original rising-block puzzle inspired by Collapse: move the cursor with the D-pad, press A on an orthogonally connected group of at least three identical blocks. Blocks fall down within their own columns after a clear. Blocks use solid colors without number labels. Press Down while already on the bottom row to bring up the next row immediately; the cursor follows the existing blocks upward and the automatic-row timer resets. A row rises every eight seconds initially, speeding up as the score grows; reaching the top ends the game. Groups score `n*(n-1)*5`. B/Start/Select pauses; A retries after game over. No copyrighted Collapse assets are used.
 
+## Minesweeper
+
+A 9x9 field with ten mines. D-pad moves the cursor, A digs and Select toggles a flag (up to ten flags). Your first dig and its surrounding eight squares are safe. Empty spaces open their neighbors automatically. Press A on an already revealed number with the matching count of neighboring flags to reveal its remaining neighbors; incorrect flags can expose a mine. Reveal every safe square to win. B/Start opens Resume, New Game and Back to Games. A after winning or losing starts a fresh field. The timer starts with the first dig and pauses in the menu.
+
+## PokePet
+
+Adopts a random Pokemon from the active game's loaded species roster, including the extended roster when 1025Dex is enabled. The pet uses the live front/menu sprite provider, so your current native or modded art and 1025Dex animated/static/G9 Gen3 choices apply. Species and care progress persist between PC visits and restarts, separately for each playthrough. The species stays the same when you switch sprite styles. No Pokemon art is bundled or downloaded by this game.
+
+D-pad selects Feed, Play, Rest/Wake or Clean. A cares for the pet; short reactions accompany each action. Food, happiness, energy and hygiene decrease while visiting; sleep restores energy. Play uses energy, and a sleeping pet must be woken before other care. Age tracks time spent visiting and bond counts successful care. Needs freeze when paused, outside the pet screen and while the game is closed; pets never die from offline neglect.
+
+B/Start/Select opens Resume, New Pet or Back to Games. New Pet requires A confirmation (B keeps your current pet), then replaces the saved pet with a new random adoption. If its species is removed by a mod change, a new supported species is adopted on the next visit. Care saves immediately, every fifteen active seconds and when pausing/exiting. A visible `SAVE FAILED - SESSION ONLY` notice appears if durable storage is unavailable. No generic pet replaces Pokemon art; pending sprite loads show a loading label.
+
 ## Display and engine adapters
 
 Native 160x144 and 240x160 layouts. Card sprites are drawn at uniform integer factors: 1x (16x24) on Gen 1/2, 2x (32x48) on Gen 3. All textures and the presentation canvas use nearest filtering. Flips crop a central sprite strip instead of stretching it; moving cards, particles, tiles and falling blocks snap to integer coordinates. Missing sprites use procedural pixel cards. The games use a native-size canvas and whole physical-pixel window scaling, with black letterboxing, independent of the engine fill setting. High-DPI origins are pixel-aligned; a window smaller than the native game surface crops rather than fractional-scales it. Controls only use abstract input actions (`wasPressed` and `isDown`).
@@ -54,9 +66,9 @@ Run with Python and `lupa` installed:
 
     python tests/run.py /path/to/gen1recomp-0.3.54
 
-Tests run against engines 0.3.54 and 0.3.58, plus manifest validation including the exact GitHub update source. The additional rules suite covers 100 shuffled Blackjack decks, Collapse clearing/gravity, and all extra-game pause/exit controls. Pixel checks exercise 132 frames, 884 sprite draws, and eight window/DPI layouts. Tests cover animation timing, rule-state isolation, pause/resume, direct native PC integration, Klondike rules and controls; Snake growth, collisions, turns and victory; Tetris bags, rotation, clears, levels and top-out; game timers, pause, retry and submenu navigation. The native-menu integration suite tours all five games and returns to the same PC across all eleven game IDs. ROM text/font/chrome and graphics/audio are fixture substitutes, not eleven ROM-backed playthroughs.
+Tests run against engines 0.3.54 and 0.3.58, plus manifest validation including the exact GitHub update source. The additional rules suite covers 100 shuffled Blackjack decks, Collapse clearing/gravity, 100 Minesweeper fields with adjacent counts and safe first neighborhoods, chord wins/losses, pet need changes, save/reopen and adoption confirmation. Sprite-provider fixtures verify live style changes and extended species in all three generations. Pixel checks exercise 184 frames, 910 sprite draws, and eight window/DPI layouts. Tests also cover the existing game rules, animations, pause/resume, retry and submenu navigation. The native-menu integration suite tours all seven games and returns to the same PC across all eleven game IDs. ROM text/font/chrome, species rosters and graphics/audio are fixture substitutes, not eleven ROM-backed playthroughs.
 
-Real LOVE renders at both native resolutions cover the submenu, Snake, Tetris, pause and game-over states, plus animation frame sequences. Animated previews are in `docs/effects-160.gif` and `docs/effects-240.gif`.
+Real LOVE renders at both native resolutions cover the updated submenu, Minesweeper and PokePet (using a G9 Gen3 sprite supplied by 1025Dex), alongside the existing game and animation previews. Animated previews are in `docs/effects-160.gif` and `docs/effects-240.gif`. Pet art is drawn at native 1x with nearest filtering and whole-pixel motion; the full game surface retains whole physical-pixel window scaling.
 
 Card faces are extracted from the user-provided `Poker cards 1.3.zip`. No author/license document accompanied it. The patterned back and procedural fallback are original. See `ASSET_CREDITS.md`.
 
